@@ -1,11 +1,11 @@
 # This Python file uses the following encoding: utf-8
 import sys
+import os
 
 
-from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
 import pyqtgraph as pg
 
 
@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.data = None
+        self.data = []
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
 
         # Connect button to function
         self.ui.pushButton_upload.clicked.connect(self.onclick_upload)
-        self.ui.pushButton.clicked.connect(self.clear_checkboxes)
+        self.ui.pushButton.clicked.connect(self.selectDirectory)
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -74,39 +74,68 @@ class MainWindow(QMainWindow):
 
     # Function to parse data
     def onclick_upload(self):
-        global data
-        # Get the data from data list
-        self.data = data
-        # Print the parsed data up to the first underscore
-        projectdata = [i.split("_")[0] for i in self.data]
-        #Remove the duplicate data
-        projectdata = list(set(projectdata))
-        projectdata.sort()
+        projectdata = []
+        designdata = []
+        sampledata = []
+        materialdata = []
+        printdata = []
+        orientationdata = []
+        adata = []
+        bdata = []
+        gdata = []
+        fdata = []
+        timestamp = []
+        directiondata = []
+        speeddata = [] 
+        cyclesdata = []
+        stepsdata = []
+        contactsdata = []
+        sampleratedata = []
+        downsamplingdata = []
+        referencedata = []
+
+        # Parse the first object in data list up to the first underscore
+        searchkey_file = "File"
+        searchkey_test = "Test"
+        index_file = self.data.index(searchkey_file)+1
+        index_test = self.data.index(searchkey_test)+1
+        paraList = self.data[index_file].split("_")
+        testList = self.data[index_test]
+        print(paraList)
+        print(testList)
+        # Get the first two characters of the string
+        projectdata.append(paraList[0])
         # Add the parsed data to the combox widget
         self.ui.comboBox_project.addItems(projectdata)
-        # Parse the data from the first underscore to the second underscore
-        designdata = [i.split("_")[1] for i in self.data]
-        # Remove the duplicate data
-        designdata = list(set(designdata))
-        # Order the data
-        designdata.sort()
-        # Parse the data from the second underscore to the third underscore
-        sampledata = [i.split("_")[2] for i in self.data]
-        sampledata = list(set(sampledata))
-        sampledata.sort()
-        # Parse the data from the third underscore to the fourth underscore
-        materialdata = [i.split("_")[3] for i in self.data]
-        materialdata = list(set(materialdata))
-        materialdata.sort()
-        # Parse the data from the fourth underscore to the fifth underscore
-        printdata = [i.split("_")[4] for i in self.data]
-        printdata = list(set(printdata))
-        printdata.sort()
 
-        orientationdata = [i.split("_")[5] for i in self.data]
-        orientationdata = list(set(orientationdata))
-        orientationdata.sort()
+        designdata.append(paraList[1][1:])
+        sampledata.append(paraList[2][1:])
+        materialdata.append(paraList[3][1:])
+        printdata.append(paraList[4][1:])
+        orientationdata.append(paraList[5][1:])
+        # search for strings in the list beginning with A, B, G, F, T
+        for i in range(len(paraList)):
+            if paraList[i].startswith("A"):
+                adata.append(paraList[i][1:])
+            elif paraList[i].startswith("B"):
+                bdata.append(paraList[i][1:])
+            elif paraList[i].startswith("G"):
+                gdata.append(paraList[i][1:])
+            elif paraList[i].startswith("F"):
+                fdata.append(paraList[i][1:])
+            elif paraList[i].startswith("T"):
+                timestamp.append(paraList[i][1:])
+        print(adata, bdata, gdata, fdata, timestamp)
 
+        directiondata.append(testList[0][18:])
+        speeddata.append(testList[1][14:])
+        cyclesdata.append(testList[2][7:])
+        stepsdata.append(testList[3][6:])
+        contactsdata.append(testList[4][9:])
+        sampleratedata.append(testList[5][12:])
+        downsamplingdata.append(testList[6][11:])
+        referencedata.append(testList[7][10:])
+        print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         for i in range(len(designdata)):
             self.addCheckbox(designdata[i], self.ui.scrollAreaWidgetContents_design)
@@ -120,12 +149,33 @@ class MainWindow(QMainWindow):
         for i in range(len(printdata)):
             self.addCheckbox(printdata[i], self.ui.scrollAreaWidgetContents_print)
 
-        #for i in range(len(orientationdata)):
         for i in range(len(orientationdata)):
             self.addCheckbox(orientationdata[i], self.ui.scrollAreaWidgetContents_orientation)
 
-        for i in range(100):
-            self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_A)
+        if adata != None:
+            for i in range(len(adata)):
+                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_A)
+        
+        if bdata != None:
+            for i in range(len(bdata)):
+                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_B)
+        
+        if fdata != None:
+            for i in range(len(fdata)):
+                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_F)
+
+        if gdata != None:
+            for i in range(len(gdata)):
+                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_G)
+        
+        for i in range(len(speeddata)):
+            self.addCheckbox(speeddata[i], self.ui.scrollAreaWidgetContents_speed)
+        
+        for i in range(len(cyclesdata)):
+            self.addCheckbox(cyclesdata[i], self.ui.scrollAreaWidgetContents_cycles)
+
+        for i in range(len(stepsdata)):
+            self.addCheckbox(stepsdata[i], self.ui.scrollAreaWidgetContents_steps)
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
@@ -133,6 +183,45 @@ class MainWindow(QMainWindow):
         checkbox = QCheckBox(name)
         parent.layout().addWidget(checkbox)
         checkbox.setVisible(True)
+
+    def selectDirectory(self):
+        dupcheck = False
+        # Get the directory from the user
+        directory = QFileDialog.getExistingDirectory(None, "Select Directory")
+        # Get the files from the directory
+        files = os.listdir(directory)
+        # Create a list to store the data
+        # Loop through the files
+        for i in files:
+            # Check if the file is a .csv file
+            if i.endswith(".csv"):
+                for duplicate in self.data:
+                    if i[:-4] in duplicate:
+                        dupcheck = True
+                #Check for duplicate files
+                if dupcheck == False:
+                    # Save the file name without .csv to the list
+                    self.data.append("File")
+                    self.data.append(i[:-4])
+                    # Parse the contents of the file line by line and save to a list
+                    with open(directory + "/" + i, "r") as f:
+                        # Read the lines
+                        lines = f.readlines()
+                        self.data.append("Test")
+                        # Loop through the lines
+                        for line in lines:
+                            # Split the line by commas
+                            line = line.split(",")
+                            # Remove the new line character
+                            line[-1] = line[-1][:-1]
+                            # Add the line to the list
+                            self.data.append(line)  
+                    print("Data added")  
+                else:
+                    # If the file is a duplicate, skip it
+                    print("Duplicate file found: "+i)
+                    dupcheck = False
+                    continue           
 
 
 class ScatterPlot(pg.PlotWidget):
