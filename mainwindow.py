@@ -15,21 +15,6 @@ import pyqtgraph as pg
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_MainWindow
 
-data1 = "P1_D1_S1_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data2 = "P1_D1_S2_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data3 = "P1_D1_S3_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data4 = "P1_D2_S1_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data5 = "P1_D2_S2_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data6 = "P1_D2_S3_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data7 = "P1_D3_S1_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data8 = "P1_D3_S2_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data9 = "P1_D3_S3_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data10 = "P1_D3_S4_M1_C1_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data11 = "P1_D3_S5_M1_C2_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-data12 = "P1_D3_S5_M1_C3_O1_T2023_01_12_17_59_26_bending_direction=0_bending_speed=2_cycles=1_steps=1200_contacts=1_sample_rate=100_downsample=1_reference=1kΩ"
-
-# A list of data to be used by the interface
-data = [data1, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12]
 
 
 class MainWindow(QMainWindow):
@@ -43,7 +28,14 @@ class MainWindow(QMainWindow):
         self.ytext= "k-factor"
         self.xunit= None
         self.yunit= None
+        self.x = [1,2,3,4,5,6,7,8,9,10]
+        self.y = [3,3,3,4,4,5,5,5,5,5]
+        self.coding = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
+
+        # Connect combox to funtion
+        self.ui.comboBox_project.currentTextChanged.connect(self.on_cbproject_changed)
+        self.ui.comboBox_value.currentTextChanged.connect(self.on_cbvalue_changed)
         # Connect button to function
         self.ui.pushButton_upload.clicked.connect(self.onclick_upload)
         self.ui.pushButton.clicked.connect(self.selectDirectory)
@@ -71,6 +63,27 @@ class MainWindow(QMainWindow):
             i.deleteLater()
         
         
+
+    # Function to react to combox selection
+    def on_cbproject_changed(self, value):
+        print("Combox project changed to: " + value)
+
+    def on_cbvalue_changed(self, value):
+        print("Combox value changed to: " + value)
+        self.xtext = "Entsprechendes x zu " + value
+        self.ytext = "Entsprechendes y zu " + value
+        self.xunit = "Einheit x zu " + value
+        self.yunit = "Einheit y zu " + value
+        self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+        self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+
+    # Function to react to checkbox selection and print the name of the checkbox
+    def on_checkbox_changed(self):
+        name = self.sender().text()
+        print("Checkbox " + name + " was cahnged.")
+        self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+        self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+
 
     # Function to parse data
     def onclick_upload(self):
@@ -108,11 +121,11 @@ class MainWindow(QMainWindow):
         # Add the parsed data to the combox widget
         self.ui.comboBox_project.addItems(projectdata)
 
-        designdata.append(paraList[1][1:])
-        sampledata.append(paraList[2][1:])
-        materialdata.append(paraList[3][1:])
-        printdata.append(paraList[4][1:])
-        orientationdata.append(paraList[5][1:])
+        designdata.append(paraList[1])
+        sampledata.append(paraList[2])
+        materialdata.append(paraList[3])
+        printdata.append(paraList[4])
+        orientationdata.append(paraList[5])
         # search for strings in the list beginning with A, B, G, F, T
         for i in range(len(paraList)):
             if paraList[i].startswith("A"):
@@ -182,6 +195,7 @@ class MainWindow(QMainWindow):
         parent.setLayout(QVBoxLayout())
         checkbox = QCheckBox(name)
         parent.layout().addWidget(checkbox)
+        checkbox.stateChanged.connect(self.on_checkbox_changed)
         checkbox.setVisible(True)
 
     def selectDirectory(self):
@@ -227,12 +241,19 @@ class MainWindow(QMainWindow):
 class ScatterPlot(pg.PlotWidget):
     def __init__(self, xtext, xunit, ytext, yunit, **kargs):
         super().__init__(**kargs)
-        self.setXRange(0, 200)
-        self.setYRange(0, 3)
+        self.setBackground('w')
         self.setLabel(axis='bottom', text=xtext, units=xunit)
         self.setLabel(axis='left', text=ytext, units=yunit)
         self.showGrid(x=True, y=True, alpha=0.5)
 
+    def refresh(self, xtext, xunit, ytext, yunit, x, y, coding):
+        self.clear()
+        self.setLabel(axis='bottom', text=xtext, units=xunit)
+        self.setLabel(axis='left', text=ytext, units=yunit)
+        self.plotnew(x, y, coding)
+
+    def plotnew(self, x, y, coding):
+        self.addItem(pg.ScatterPlotItem(x, y, pen=None, symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
 
 
 if __name__ == "__main__":
