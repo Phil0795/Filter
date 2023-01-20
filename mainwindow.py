@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
         self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
 
+
     # Function to parse data
     def onclick_upload(self):
         projectdata = []
@@ -253,7 +254,7 @@ class ScatterPlot(pg.PlotWidget):
         self.plotnew(x, y, coding)
 
     def plotnew(self, x, y, coding):
-        self.addItem(pg.ScatterPlotItem(x, y, pen=None, symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
+        self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
 
 
 if __name__ == "__main__":
