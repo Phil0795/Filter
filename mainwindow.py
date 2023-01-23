@@ -229,8 +229,9 @@ class MainWindow(QMainWindow):
                             line = line.split(",")
                             # Remove the new line character
                             line[-1] = line[-1][:-1]
-                            # Add the line to the list
-                            self.data.append(line)  
+                            # Add the line to the list if it is not the second line
+                            if line[0] != "timestamp":
+                                self.data.append(line)  
                     print("Data added")  
                 else:
                     # If the file is a duplicate, skip it
