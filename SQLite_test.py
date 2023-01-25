@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from mainwindow import ScatterPlot
 
 # Define path to data
 path1 = "C:\\Users\\Messknecht\\OneDrive - tu-braunschweig.de\\Documents"
@@ -146,12 +147,12 @@ datacursor.executemany(Q8, zip(time, step, R1, R2))
 
 connection_data.commit()
 
-datacursor.execute("SELECT * FROM datas")
-for x in datacursor:
-    print(x)
-
-#datacursor.execute("SELECT * FROM csvdatabetter")
+#datacursor.execute("SELECT * FROM datas")
 #for x in datacursor:
 #    print(x)
+
+datacursor.execute("SELECT * FROM csvdatabetter WHERE step = 180 OR step = 200 ORDER BY time")
+for x in datacursor:
+    print(x)
 
 connection_data.close()
