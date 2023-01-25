@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import os
+import sqlite3
 
 
 from PySide6.QtCore import QFile
@@ -15,7 +16,37 @@ import pyqtgraph as pg
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_MainWindow
 
-
+#Create a database in RAM
+connection_data = sqlite3.connect('testproject.db')
+# Create a cursor to work with
+datacursor = connection_data.cursor()
+# Create a table if it doesn't exist
+datacursor.execute("Create TABLE IF NOT EXISTS database (timestamp text PRIMARY KEY ON CONFLICT IGNORE, project int, design int, sample int, material int, print int, orientation int, apara int, bpara int, fpara int, gpara int, direction short int, speed short int, cycles int, steps int, contacts int, samplerate int, downsample int, reference str, alldata str, k_fac_mean float, k_fac_devi float, Hyst_mean float, Hyst_devi float)")
+# Define commands to update the database
+Q_timestamp = "INSERT OR IGNORE INTO database (timestamp) VALUES (?)"
+Q_project = "UPDATE database SET project = ? WHERE timestamp = ?"
+Q_design = "UPDATE database SET design = ? WHERE timestamp = ?"
+Q_sample = "UPDATE database SET sample = ? WHERE timestamp = ?"
+Q_material = "UPDATE database SET material = ? WHERE timestamp = ?"
+Q_print = "UPDATE database SET print = ? WHERE timestamp = ?"
+Q_orientation = "UPDATE database SET orientation = ? WHERE timestamp = ?"
+Q_apara = "UPDATE database SET apara = ? WHERE timestamp = ?"
+Q_bpara = "UPDATE database SET bpara = ? WHERE timestamp = ?"
+Q_fpara = "UPDATE database SET fpara = ? WHERE timestamp = ?"
+Q_gpara = "UPDATE database SET gpara = ? WHERE timestamp = ?"
+Q_direction = "UPDATE database SET direction = ? WHERE timestamp = ?"
+Q_speed = "UPDATE database SET speed = ? WHERE timestamp = ?"
+Q_cycles = "UPDATE database SET cycles = ? WHERE timestamp = ?"
+Q_steps = "UPDATE database SET steps = ? WHERE timestamp = ?"
+Q_contacts = "UPDATE database SET contacts = ? WHERE timestamp = ?"
+Q_samplerate = "UPDATE database SET samplerate = ? WHERE timestamp = ?"
+Q_downsample = "UPDATE database SET downsample = ? WHERE timestamp = ?"
+Q_reference = "UPDATE database SET reference = ? WHERE timestamp = ?"
+Q_alldata = "UPDATE database SET alldata = ? WHERE timestamp = ?"
+Q_k_fac_mean = "UPDATE database SET k_fac_mean = ? WHERE timestamp = ?"
+Q_k_fac_devi = "UPDATE database SET k_fac_devi = ? WHERE timestamp = ?"
+Q_Hyst_mean = "UPDATE database SET Hyst_mean = ? WHERE timestamp = ?"
+Q_Hyst_devi = "UPDATE database SET Hyst_devi = ? WHERE timestamp = ?"
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -23,6 +54,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.data = []
+        self.rawdata = []
         self.otherdata = []
         self.widget = QCheckBox()
         self.xtext= "Data"
@@ -38,8 +70,7 @@ class MainWindow(QMainWindow):
         self.ui.comboBox_project.currentTextChanged.connect(self.on_cbproject_changed)
         self.ui.comboBox_value.currentTextChanged.connect(self.on_cbvalue_changed)
         # Connect button to function
-        self.ui.pushButton_upload.clicked.connect(self.onclick_upload)
-        self.ui.pushButton.clicked.connect(self.selectDirectory)
+        self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -116,6 +147,10 @@ class MainWindow(QMainWindow):
 
     # Function to parse data
     def onclick_upload(self):
+        acheck = False
+        bcheck = False
+        gcheck = False
+        fcheck = False
         projectdata = []
         designdata = []
         sampledata = []
@@ -145,11 +180,7 @@ class MainWindow(QMainWindow):
         testList = self.data[index_test]
         print(paraList)
         print(testList)
-        # Get the first two characters of the string
-        projectdata.append(paraList[0])
-        # Add the parsed data to the combox widget
-        self.ui.comboBox_project.addItems(projectdata)
-
+        projectdata.append(paraList[0])       
         designdata.append(paraList[1])
         sampledata.append(paraList[2])
         materialdata.append(paraList[3])
@@ -159,14 +190,26 @@ class MainWindow(QMainWindow):
         for i in range(len(paraList)):
             if paraList[i].startswith("A"):
                 adata.append(paraList[i][1:])
+                acheck = True
             elif paraList[i].startswith("B"):
                 bdata.append(paraList[i][1:])
+                bcheck = True
             elif paraList[i].startswith("G"):
                 gdata.append(paraList[i][1:])
+                gcheck = True
             elif paraList[i].startswith("F"):
                 fdata.append(paraList[i][1:])
+                fcheck = True
             elif paraList[i].startswith("T"):
                 timestamp.append(paraList[i][1:])
+        if acheck == False:
+            adata.append(None)
+        if bcheck == False:
+            bdata.append(None)
+        if gcheck == False:
+            gdata.append(None)
+        if fcheck == False:
+            fdata.append(None)
         print(adata, bdata, gdata, fdata, timestamp)
 
         directiondata.append(testList[0][18:])
@@ -179,6 +222,38 @@ class MainWindow(QMainWindow):
         referencedata.append(testList[7][10:])
         print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
+        # Add the data to the database
+        for i in range(len(timestamp)):
+            datacursor.execute(Q_timestamp, (timestamp[i],))
+            datacursor.execute(Q_project, (projectdata[i], timestamp[i]))
+            datacursor.execute(Q_design, (designdata[i], timestamp[i]))
+            datacursor.execute(Q_sample, (sampledata[i], timestamp[i]))
+            datacursor.execute(Q_material, (materialdata[i], timestamp[i]))
+            datacursor.execute(Q_print, (printdata[i], timestamp[i]))
+            datacursor.execute(Q_orientation, (orientationdata[i], timestamp[i]))
+            datacursor.execute(Q_apara, (adata[i], timestamp[i]))
+            datacursor.execute(Q_bpara, (bdata[i], timestamp[i]))
+            datacursor.execute(Q_gpara, (gdata[i], timestamp[i]))
+            datacursor.execute(Q_fpara, (fdata[i], timestamp[i]))
+            datacursor.execute(Q_direction, (directiondata[i], timestamp[i]))
+            datacursor.execute(Q_speed, (speeddata[i], timestamp[i]))
+            datacursor.execute(Q_cycles, (cyclesdata[i], timestamp[i]))
+            datacursor.execute(Q_steps, (stepsdata[i], timestamp[i]))
+            datacursor.execute(Q_contacts, (contactsdata[i], timestamp[i]))
+            datacursor.execute(Q_samplerate, (sampleratedata[i], timestamp[i]))
+            datacursor.execute(Q_downsample, (downsamplingdata[i], timestamp[i]))
+            datacursor.execute(Q_reference, (referencedata[i], timestamp[i]))
+            datacursor.execute(Q_alldata, (self.rawdata[i], timestamp[i]))
+            connection_data.commit()
+            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps, contacts, samplerate, downsample, reference from database")
+            for x in datacursor:
+                print(x)
+
+
+        # Add the parsed data to the combox widget
+        self.ui.comboBox_project.addItems(projectdata)
+
+        # Add checkboxes based on the parsed data
         for i in range(len(designdata)):
             self.addCheckbox(designdata[i], self.ui.scrollAreaWidgetContents_design)
 
@@ -255,9 +330,11 @@ class MainWindow(QMainWindow):
                         # Loop through the lines
                         lines[0] = lines[0][:-1]
                         self.data.append(lines[0].split(','))
+                        self.rawdata.append("".join(lines[2:]))
                         for line in lines[2:]:
                             self.otherdata.append(line[:-1])  
                     print("Data added")  
+                    self.onclick_upload()
                 else:
                     # If the file is a duplicate, skip it
                     print("Duplicate file found: "+i)
