@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.data = []
+        self.otherdata = []
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -69,13 +70,40 @@ class MainWindow(QMainWindow):
         print("Combox project changed to: " + value)
 
     def on_cbvalue_changed(self, value):
-        print("Combox value changed to: " + value)
-        self.xtext = "Entsprechendes x zu " + value
-        self.ytext = "Entsprechendes y zu " + value
-        self.xunit = "Einheit x zu " + value
-        self.yunit = "Einheit y zu " + value
-        self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
-        self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+        global teim
+        global stepppp
+        global R1
+        global R2
+        teim = []
+        stepppp = []
+        R1 = []
+        R2 = []
+        for i in range(len(self.otherdata)):
+            teim.append(int(self.otherdata[i].split(',')[0])-int(self.otherdata[0].split(',')[0]))
+            stepppp.append(int(self.otherdata[i].split(',')[1]))
+            R1.append(int(self.otherdata[i].split(',')[2]))
+            R2.append(int(self.otherdata[i].split(',')[3]))
+
+        if value == "Hysterese (mean)":
+            self.xtext = "Time"
+            self.ytext = "Resistance"
+            self.xunit = "ms"
+            self.yunit = "Ohm"
+            self.graphWidget.clear()
+            self.graphWidget2.clear()
+            self.graphWidget.plotline(teim, R1, "timestamp goes here")
+            self.graphWidget2.plotline(teim, R2, "timestamp goes here")
+            
+
+
+        else:
+            print("Combox value changed to: " + value)
+            self.xtext = "Entsprechendes x zu " + value
+            self.ytext = "Entsprechendes y zu " + value
+            self.xunit = "Einheit x zu " + value
+            self.yunit = "Einheit y zu " + value
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
     # Function to react to checkbox selection and print the name of the checkbox
     def on_checkbox_changed(self):
@@ -201,6 +229,7 @@ class MainWindow(QMainWindow):
 
     def selectDirectory(self):
         dupcheck = False
+        self.otherdata.clear()
         # Get the directory from the user
         directory = QFileDialog.getExistingDirectory(None, "Select Directory")
         # Get the files from the directory
@@ -224,14 +253,10 @@ class MainWindow(QMainWindow):
                         lines = f.readlines()
                         self.data.append("Test")
                         # Loop through the lines
-                        for line in lines:
-                            # Split the line by commas
-                            line = line.split(",")
-                            # Remove the new line character
-                            line[-1] = line[-1][:-1]
-                            # Add the line to the list if it is not the second line
-                            if line[0] != "timestamp":
-                                self.data.append(line)  
+                        lines[0] = lines[0][:-1]
+                        self.data.append(lines[0].split(','))
+                        for line in lines[2:]:
+                            self.otherdata.append(line[:-1])  
                     print("Data added")  
                 else:
                     # If the file is a duplicate, skip it
@@ -256,6 +281,10 @@ class ScatterPlot(pg.PlotWidget):
 
     def plotnew(self, x, y, coding):
         self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
+
+    def plotline(self, x, y, coding):
+        self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
+        self.addItem(pg.PlotCurveItem(x, y, pen='r'))
 
 
 if __name__ == "__main__":
