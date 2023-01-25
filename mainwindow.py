@@ -56,6 +56,10 @@ class MainWindow(QMainWindow):
         self.data = []
         self.rawdata = []
         self.otherdata = []
+        self.stepcount = []
+        self.timecount = []
+        self.R1 = []
+        self.R2 = []
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -99,31 +103,23 @@ class MainWindow(QMainWindow):
     # Function to react to combox selection
     def on_cbproject_changed(self, value):
         print("Combox project changed to: " + value)
+        
+        
+
 
     def on_cbvalue_changed(self, value):
-        global teim
-        global stepppp
-        global R1
-        global R2
-        teim = []
-        stepppp = []
-        R1 = []
-        R2 = []
-        for i in range(len(self.otherdata)):
-            teim.append(int(self.otherdata[i].split(',')[0])-int(self.otherdata[0].split(',')[0]))
-            stepppp.append(int(self.otherdata[i].split(',')[1]))
-            R1.append(int(self.otherdata[i].split(',')[2]))
-            R2.append(int(self.otherdata[i].split(',')[3]))
+        
 
         if value == "Hysterese (mean)":
+            self.splitData("2023.01.12-17.59.26")
             self.xtext = "Time"
             self.ytext = "Resistance"
             self.xunit = "ms"
             self.yunit = "Ohm"
             self.graphWidget.clear()
             self.graphWidget2.clear()
-            self.graphWidget.plotline(teim, R1, "timestamp goes here")
-            self.graphWidget2.plotline(teim, R2, "timestamp goes here")
+            self.graphWidget.plotline(self.stepcount, self.R1, "timestamp goes here")
+            self.graphWidget2.plotline(self.stepcount, self.R2, "timestamp goes here")
             
 
 
@@ -138,8 +134,77 @@ class MainWindow(QMainWindow):
 
     # Function to react to checkbox selection and print the name of the checkbox
     def on_checkbox_changed(self):
-        name = self.sender().text()
-        print("Checkbox " + name + " was cahnged.")
+        checkboxes_design = []
+        checkboxes_sample = []
+        checkboxes_material = []
+        checkboxes_print = []
+        checkboxes_orientation = []
+        checkboxes_A = []
+        checkboxes_B = []
+        checkboxes_F = []
+        checkboxes_G = []
+        checkboxes_speed = []
+        checkboxes_cycles = []
+        checkboxes_steps = []
+        current_project = self.ui.comboBox_project.currentText()
+        print("Current project: " + current_project)
+        tempdata2 = []
+        value = self.sender().text()
+        # iterate all checkboxes in all scroll areas
+        for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_design.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_sample.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_material.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_print.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_orientation.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_A.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_B.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_F.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_G.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_speed.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_cycles.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
+            if i.isChecked():
+                checkboxes_steps.append(i.text())
+        
+        print("Checkbox " + value + " was cahnged.")
+        datacursor.execute('''SELECT timestamp FROM database WHERE design IN (0,1,2)''')
+        
+        tempdata = datacursor.fetchall()
+        # turn tempdata into a list
+        tempdata = [item for t in tempdata for item in t]
+        tempdata2.append(tempdata)
+        print (tempdata2)
+        if self.sender().isChecked():
+            for t in tempdata2:
+                if t not in self.otherdata:
+                    self.otherdata.append(t)
+        else:
+            for t in tempdata2:
+                if t in self.otherdata:
+                    self.otherdata.remove(t)
+        print (self.otherdata)
         self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
         self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
@@ -245,7 +310,7 @@ class MainWindow(QMainWindow):
             datacursor.execute(Q_reference, (referencedata[i], timestamp[i]))
             datacursor.execute(Q_alldata, (self.rawdata[i], timestamp[i]))
             connection_data.commit()
-            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps, contacts, samplerate, downsample, reference from database")
+            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps, contacts, samplerate, downsample, reference, alldata from database")
             for x in datacursor:
                 print(x)
 
@@ -269,21 +334,22 @@ class MainWindow(QMainWindow):
         for i in range(len(orientationdata)):
             self.addCheckbox(orientationdata[i], self.ui.scrollAreaWidgetContents_orientation)
 
-        if adata != None:
-            for i in range(len(adata)):
+
+        for i in range(len(adata)):
+            if adata[i] != None:
                 self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_A)
         
-        if bdata != None:
-            for i in range(len(bdata)):
+        for i in range(len(bdata)):
+            if bdata[i] != None:
                 self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_B)
         
-        if fdata != None:
-            for i in range(len(fdata)):
-                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_F)
-
-        if gdata != None:
-            for i in range(len(gdata)):
+        for i in range(len(gdata)):
+            if gdata[i] != None:
                 self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_G)
+        
+        for i in range(len(fdata)):
+            if fdata[i] != None:
+                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_F)
         
         for i in range(len(speeddata)):
             self.addCheckbox(speeddata[i], self.ui.scrollAreaWidgetContents_speed)
@@ -293,6 +359,29 @@ class MainWindow(QMainWindow):
 
         for i in range(len(stepsdata)):
             self.addCheckbox(stepsdata[i], self.ui.scrollAreaWidgetContents_steps)
+
+        self.rawdata.clear()
+
+
+    #Function to split the data bulk into four lists
+    def splitData(self, timestamp):
+        self.timecount.clear()
+        self.stepcount.clear()
+        self.R1.clear()
+        self.R2.clear()
+        #get the data from the sql database depending on the timestamp
+        datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (timestamp,))
+        for x in datacursor:
+            self.rawdata.append(x)           
+        #split data at \n
+        self.rawdata = self.rawdata[0][0].split('\n')
+        self.rawdata.pop()
+        #split the data into four lists
+        for i in range(len(self.rawdata)):
+            self.timecount.append(int(self.rawdata[i].split(',')[0])-int(self.rawdata[0].split(',')[0]))
+            self.stepcount.append(int(self.rawdata[i].split(',')[1]))
+            self.R1.append(int(self.rawdata[i].split(',')[2]))
+            self.R2.append(int(self.rawdata[i].split(',')[3]))
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
@@ -304,7 +393,6 @@ class MainWindow(QMainWindow):
 
     def selectDirectory(self):
         dupcheck = False
-        self.otherdata.clear()
         # Get the directory from the user
         directory = QFileDialog.getExistingDirectory(None, "Select Directory")
         # Get the files from the directory
@@ -330,9 +418,7 @@ class MainWindow(QMainWindow):
                         # Loop through the lines
                         lines[0] = lines[0][:-1]
                         self.data.append(lines[0].split(','))
-                        self.rawdata.append("".join(lines[2:]))
-                        for line in lines[2:]:
-                            self.otherdata.append(line[:-1])  
+                        self.rawdata.append("".join(lines[2:])) 
                     print("Data added")  
                     self.onclick_upload()
                 else:
