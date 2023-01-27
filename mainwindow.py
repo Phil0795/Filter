@@ -48,6 +48,8 @@ Q_k_fac_devi = "UPDATE database SET k_fac_devi = ? WHERE timestamp = ?"
 Q_Hyst_mean = "UPDATE database SET Hyst_mean = ? WHERE timestamp = ?"
 Q_Hyst_devi = "UPDATE database SET Hyst_devi = ? WHERE timestamp = ?"
 
+
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -60,6 +62,18 @@ class MainWindow(QMainWindow):
         self.timecount = []
         self.R1 = []
         self.R2 = []
+        self.checkboxes_design = []
+        self.checkboxes_sample = []
+        self.checkboxes_material = []
+        self.checkboxes_print = []
+        self.checkboxes_orientation = []
+        self.checkboxes_A = []
+        self.checkboxes_B = []
+        self.checkboxes_F = []
+        self.checkboxes_G = []
+        self.checkboxes_speed = []
+        self.checkboxes_cycles = []
+        self.checkboxes_steps = []
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -103,6 +117,11 @@ class MainWindow(QMainWindow):
     # Function to react to combox selection
     def on_cbproject_changed(self, value):
         print("Combox project changed to: " + value)
+        # find the corresponding project in the database and create a temporary database containing the data of the selected project
+        datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
+
+        #datacursor.execute(sqlstatement)
+        
         
         
 
@@ -111,7 +130,7 @@ class MainWindow(QMainWindow):
         
 
         if value == "Hysterese (mean)":
-            self.splitData("2023.01.12-17.59.26")
+            self.splitData(["2023.01.12-17.59.26"])
             self.xtext = "Time"
             self.ytext = "Resistance"
             self.xunit = "ms"
@@ -132,20 +151,111 @@ class MainWindow(QMainWindow):
             self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
             self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
+
+    def checkthedata(self):
+        notthefirst = False
+        sqlcommand = ""
+        if self.checkboxes_design:
+            for value in self.checkboxes_design:
+                sqlcommand = sqlcommand + "design = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_sample:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_sample:
+                sqlcommand = sqlcommand + "sample = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_material:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_material:
+                sqlcommand = sqlcommand + "material = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_print:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_print:
+                sqlcommand = sqlcommand + "print = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_orientation:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_orientation:
+                sqlcommand = sqlcommand + "orientation = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_A:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_A:
+                sqlcommand = sqlcommand + "A = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_B:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_B:
+                sqlcommand = sqlcommand + "B = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_F:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_F:
+                sqlcommand = sqlcommand + "F = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_G:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_G:
+                sqlcommand = sqlcommand + "G = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_speed:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_speed:
+                sqlcommand = sqlcommand + "speed = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_cycles:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_cycles:
+                sqlcommand = sqlcommand + "cycles = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if self.checkboxes_steps:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_steps:
+                sqlcommand = sqlcommand + "steps = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
+        if notthefirst == False:
+            return False
+        else:
+            sqlcommand = 'SELECT timestamp FROM database WHERE ' + sqlcommand
+        return sqlcommand
     # Function to react to checkbox selection and print the name of the checkbox
     def on_checkbox_changed(self):
-        checkboxes_design = []
-        checkboxes_sample = []
-        checkboxes_material = []
-        checkboxes_print = []
-        checkboxes_orientation = []
-        checkboxes_A = []
-        checkboxes_B = []
-        checkboxes_F = []
-        checkboxes_G = []
-        checkboxes_speed = []
-        checkboxes_cycles = []
-        checkboxes_steps = []
+        self.checkboxes_design = []
+        self.checkboxes_sample = []
+        self.checkboxes_material = []
+        self.checkboxes_print = []
+        self.checkboxes_orientation = []
+        self.checkboxes_A = []
+        self.checkboxes_B = []
+        self.checkboxes_F = []
+        self.checkboxes_G = []
+        self.checkboxes_speed = []
+        self.checkboxes_cycles = []
+        self.checkboxes_steps = []
         current_project = self.ui.comboBox_project.currentText()
         print("Current project: " + current_project)
         tempdata2 = []
@@ -153,49 +263,53 @@ class MainWindow(QMainWindow):
         # iterate all checkboxes in all scroll areas
         for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_design.append(i.text())
+                self.checkboxes_design.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_sample.append(i.text())
+                self.checkboxes_sample.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_material.append(i.text())
+                self.checkboxes_material.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_print.append(i.text())
+                self.checkboxes_print.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_orientation.append(i.text())
+                self.checkboxes_orientation.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_A.append(i.text())
+                self.checkboxes_A.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_B.append(i.text())
+                self.checkboxes_B.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_F.append(i.text())
+                self.checkboxes_F.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_G.append(i.text())
+                self.checkboxes_G.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_speed.append(i.text())
+                self.checkboxes_speed.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_cycles.append(i.text())
+                self.checkboxes_cycles.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
             if i.isChecked():
-                checkboxes_steps.append(i.text())
+                self.checkboxes_steps.append(i.text())
         
-        print("Checkbox " + value + " was cahnged.")
-        datacursor.execute('''SELECT timestamp FROM database WHERE design IN (0,1,2)''')
+        print("Checkbox " + value + " was changed.")
+        #print(self.checkthedata())
+        if self.checkthedata():
+            datacursor.execute(self.checkthedata())
+        for i in datacursor:
+            print(i)
         
         tempdata = datacursor.fetchall()
         # turn tempdata into a list
         tempdata = [item for t in tempdata for item in t]
         tempdata2.append(tempdata)
-        print (tempdata2)
+        #print (tempdata2)
         if self.sender().isChecked():
             for t in tempdata2:
                 if t not in self.otherdata:
@@ -204,7 +318,7 @@ class MainWindow(QMainWindow):
             for t in tempdata2:
                 if t in self.otherdata:
                     self.otherdata.remove(t)
-        print (self.otherdata)
+        #print (self.otherdata)
         self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
         self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
@@ -216,6 +330,7 @@ class MainWindow(QMainWindow):
         bcheck = False
         gcheck = False
         fcheck = False
+        check = False
         projectdata = []
         designdata = []
         sampledata = []
@@ -311,68 +426,129 @@ class MainWindow(QMainWindow):
             datacursor.execute(Q_alldata, (self.rawdata[i], timestamp[i]))
             connection_data.commit()
             datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps, contacts, samplerate, downsample, reference, alldata from database")
-            for x in datacursor:
-                print(x)
+            #for x in datacursor:
+            #    print(x)
 
 
         # Add the parsed data to the combox widget
         self.ui.comboBox_project.addItems(projectdata)
 
         # Add checkboxes based on the parsed data
-        for i in range(len(designdata)):
-            self.addCheckbox(designdata[i], self.ui.scrollAreaWidgetContents_design)
+        for y in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
+            if y.text() == designdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(designdata[0], self.ui.scrollAreaWidgetContents_design)
+        else:
+            check = False
 
-        for i in range(len(sampledata)):
-            self.addCheckbox(sampledata[i], self.ui.scrollAreaWidgetContents_sample)
-
-        for i in range(len(materialdata)):
-            self.addCheckbox(materialdata[i], self.ui.scrollAreaWidgetContents_material)
-
-        for i in range(len(printdata)):
-            self.addCheckbox(printdata[i], self.ui.scrollAreaWidgetContents_print)
-
-        for i in range(len(orientationdata)):
-            self.addCheckbox(orientationdata[i], self.ui.scrollAreaWidgetContents_orientation)
-
-
-        for i in range(len(adata)):
-            if adata[i] != None:
-                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_A)
+        for y in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
+            if y.text() == sampledata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(sampledata[0], self.ui.scrollAreaWidgetContents_sample)
+        else:
+            check = False
         
-        for i in range(len(bdata)):
-            if bdata[i] != None:
-                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_B)
-        
-        for i in range(len(gdata)):
-            if gdata[i] != None:
-                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_G)
-        
-        for i in range(len(fdata)):
-            if fdata[i] != None:
-                self.addCheckbox(f"{i}", self.ui.scrollAreaWidgetContents_F)
-        
-        for i in range(len(speeddata)):
-            self.addCheckbox(speeddata[i], self.ui.scrollAreaWidgetContents_speed)
-        
-        for i in range(len(cyclesdata)):
-            self.addCheckbox(cyclesdata[i], self.ui.scrollAreaWidgetContents_cycles)
+        for y in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
+            if y.text() == materialdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(materialdata[0], self.ui.scrollAreaWidgetContents_material)
+        else:
+            check = False
 
-        for i in range(len(stepsdata)):
-            self.addCheckbox(stepsdata[i], self.ui.scrollAreaWidgetContents_steps)
+        for y in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
+            if y.text() == printdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(printdata[0], self.ui.scrollAreaWidgetContents_print)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
+            if y.text() == orientationdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(orientationdata[0], self.ui.scrollAreaWidgetContents_orientation)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
+            if y.text() == adata[0]:
+                check=True
+        if check == False:
+            if adata[0] != None:
+                self.addCheckbox(adata[0], self.ui.scrollAreaWidgetContents_A)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
+            if y.text() == bdata[0]:
+                check=True
+        if check == False:
+            if bdata[0] != None:
+                self.addCheckbox(bdata[0], self.ui.scrollAreaWidgetContents_B)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
+            if y.text() == gdata[0]:
+                check=True
+        if check == False:
+            if gdata[0] != None:
+                self.addCheckbox(gdata[0], self.ui.scrollAreaWidgetContents_G)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
+            if y.text() == fdata[0]:
+                check=True
+        if check == False:
+            if fdata[0] != None:
+                self.addCheckbox(fdata[0], self.ui.scrollAreaWidgetContents_F)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
+            if y.text() == speeddata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(speeddata[0], self.ui.scrollAreaWidgetContents_speed)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
+            if y.text() == cyclesdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(cyclesdata[0], self.ui.scrollAreaWidgetContents_cycles)
+        else:
+            check = False
+
+        for y in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
+            if y.text() == stepsdata[0]:
+                check=True
+        if check == False:
+            self.addCheckbox(stepsdata[0], self.ui.scrollAreaWidgetContents_steps)
+        else:
+            check = False
 
         self.rawdata.clear()
 
 
     #Function to split the data bulk into four lists
-    def splitData(self, timestamp):
+    def splitData(self, timestamps):
         self.timecount.clear()
         self.stepcount.clear()
         self.R1.clear()
         self.R2.clear()
+        self.rawdata.clear()
         #get the data from the sql database depending on the timestamp
-        datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (timestamp,))
-        for x in datacursor:
-            self.rawdata.append(x)           
+        for timestamp in timestamps:
+            datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (timestamp,))
+            for x in datacursor:
+                self.rawdata.append(x)           
         #split data at \n
         self.rawdata = self.rawdata[0][0].split('\n')
         self.rawdata.pop()
@@ -421,6 +597,8 @@ class MainWindow(QMainWindow):
                         self.rawdata.append("".join(lines[2:])) 
                     print("Data added")  
                     self.onclick_upload()
+                    self.data.remove("File")
+                    self.data.remove("Test")
                 else:
                     # If the file is a duplicate, skip it
                     print("Duplicate file found: "+i)
