@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 
-from PySide6.QtCore import QFile
+from PySide6.QtCore import QFile, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
 import pyqtgraph as pg
@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_speed = []
         self.checkboxes_cycles = []
         self.checkboxes_steps = []
+        self.checkboxes = []
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -140,7 +141,6 @@ class MainWindow(QMainWindow):
         projectdata = sorted(projectdata, key=lambda x: (len(x), x))
         print(projectdata)
         for p in projectdata:
-            print(p)
             ExistingProjects = [self.ui.comboBox_project.itemText(i) for i in range(self.ui.comboBox_project.count())]
             for obj in ExistingProjects:
                 if p == obj:
@@ -155,7 +155,9 @@ class MainWindow(QMainWindow):
         print("Combox project changed to: " + value)
         # find the corresponding project in the database and create a temporary database containing the data of the selected project
         # datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
-        # delete checkboxes
+        # uncheck all checkboxes
+        for checkbox in self.checkboxes:
+            checkbox.setCheckState(Qt.CheckState.Unchecked)
         # declare list parameters
         designdata = []
         sampledata = []
@@ -174,7 +176,6 @@ class MainWindow(QMainWindow):
         # get data from database corresponding to the selected project
         datacursor.execute("SELECT design FROM database WHERE project = ?", (value,))
         designdata = datacursor.fetchall()
-        # go from tuple to list
         # remove duplicates
         designdata = list(dict.fromkeys(designdata))
         # sort list
@@ -182,7 +183,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):           
             if box.text() not in designdata:
-                print(box.text())
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(designdata)):
             #print(designdata[i])
@@ -201,6 +202,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
             if box.text() not in sampledata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(sampledata)):
             for box in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
@@ -218,6 +220,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
             if box.text() not in materialdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(materialdata)):
             for box in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
@@ -235,6 +238,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
             if box.text() not in printdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(printdata)):
             for box in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
@@ -252,6 +256,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
             if box.text() not in orientationdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(orientationdata)):
             for box in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
@@ -269,6 +274,7 @@ class MainWindow(QMainWindow):
         # create checkboxes
         for box in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
             if box.text() not in Adata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(Adata)):
             for box in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
@@ -286,6 +292,7 @@ class MainWindow(QMainWindow):
         Bdata.sort()
         for box in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
             if box.text() not in Bdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(Bdata)):
             for box in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
@@ -303,6 +310,7 @@ class MainWindow(QMainWindow):
         Fdata.sort()
         for box in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
             if box.text() not in Fdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(Fdata)):
             for box in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
@@ -320,6 +328,7 @@ class MainWindow(QMainWindow):
         Gdata.sort()
         for box in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
             if box.text() not in Gdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(Gdata)):
             for box in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
@@ -337,6 +346,7 @@ class MainWindow(QMainWindow):
         speeddata.sort()
         for box in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
             if box.text() not in speeddata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(speeddata)):
             for box in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
@@ -353,6 +363,7 @@ class MainWindow(QMainWindow):
         cyclesdata.sort()
         for box in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
             if box.text() not in cyclesdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(cyclesdata)):
             for box in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
@@ -369,6 +380,7 @@ class MainWindow(QMainWindow):
         stepsdata.sort()
         for box in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
             if box.text() not in stepsdata:
+                self.checkboxes.remove(box)
                 box.deleteLater()
         for i in range(len(stepsdata)):
             for box in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
@@ -735,6 +747,7 @@ class MainWindow(QMainWindow):
     def addCheckbox(self, name, parent):
         parent.setLayout(QVBoxLayout())
         checkbox = QCheckBox(name)
+        self.checkboxes.append(checkbox)
         parent.layout().addWidget(checkbox)
         checkbox.stateChanged.connect(self.on_checkbox_changed)
         checkbox.setVisible(True)
