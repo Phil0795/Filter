@@ -18,6 +18,7 @@ from ui_form import Ui_MainWindow
 
 #Create a database in RAM
 connection_data = sqlite3.connect('testproject.db')
+connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
 datacursor = connection_data.cursor()
 # Create a table if it doesn't exist
@@ -89,6 +90,8 @@ class MainWindow(QMainWindow):
         self.ui.comboBox_value.currentTextChanged.connect(self.on_cbvalue_changed)
         # Connect button to function
         self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
+        self.ui.pushButton.clicked.connect(self.readfromdatabase)
+        self.ui.pushButton_detail.clicked.connect(self.clear_checkboxes)
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -98,7 +101,7 @@ class MainWindow(QMainWindow):
         self.ui.widget_bot.setLayout(QVBoxLayout())
         self.ui.widget_bot.layout().addWidget(self.graphWidget2)
 
-    # Function to clear checkboxes
+    # Function to clear checkboxes - do not use this. It was only used for debugging.
     def clear_checkboxes(self):
         # Get all the checkboxes in the scroll area and delete them
         for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
@@ -111,15 +114,271 @@ class MainWindow(QMainWindow):
             i.deleteLater()
         for i in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
             i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
+            i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
+            i.deleteLater()
         
-        
+    def readfromdatabase(self):
+        projectdata = []
+        check = False
+        datacursor.execute("SELECT project FROM database")
+        projectdata = datacursor.fetchall()
+        # remove duplicates
+        projectdata = list(dict.fromkeys(projectdata))      
+        # sort list by length and alphabet
+        projectdata = sorted(projectdata, key=lambda x: (len(x), x))
+        print(projectdata)
+        for p in projectdata:
+            print(p)
+            ExistingProjects = [self.ui.comboBox_project.itemText(i) for i in range(self.ui.comboBox_project.count())]
+            for obj in ExistingProjects:
+                if p == obj:
+                    check = True
+            if check == False:
+                self.ui.comboBox_project.addItems(projectdata)
+            else:
+                check = False 
 
     # Function to react to combox selection
     def on_cbproject_changed(self, value):
         print("Combox project changed to: " + value)
         # find the corresponding project in the database and create a temporary database containing the data of the selected project
-        datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
+        # datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
+        # delete checkboxes
+        # declare list parameters
+        designdata = []
+        sampledata = []
+        materialdata = []
+        printdata = []
+        orientationdata = []
+        Adata = []
+        Bdata = []
+        Fdata = []
+        Gdata = []
+        speeddata = []
+        cyclesdata = []
+        stepsdata = []
+        check = False
 
+        # get data from database corresponding to the selected project
+        datacursor.execute("SELECT design FROM database WHERE project = ?", (value,))
+        designdata = datacursor.fetchall()
+        # go from tuple to list
+        # remove duplicates
+        designdata = list(dict.fromkeys(designdata))
+        # sort list
+        designdata = sorted(designdata, key = lambda x: (len(x), x))
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):           
+            if box.text() not in designdata:
+                print(box.text())
+                box.deleteLater()
+        for i in range(len(designdata)):
+            #print(designdata[i])
+            for box in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
+                if box.text() == designdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(designdata[i], self.ui.scrollAreaWidgetContents_design)
+            else:
+                check = False
+
+        datacursor.execute("SELECT sample FROM database WHERE project = ?", (value,))
+        sampledata = datacursor.fetchall()
+        sampledata = list(dict.fromkeys(sampledata))
+        sampledata = sorted(sampledata, key = lambda x: (len(x), x))
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
+            if box.text() not in sampledata:
+                box.deleteLater()
+        for i in range(len(sampledata)):
+            for box in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
+                if box.text() == sampledata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(sampledata[i], self.ui.scrollAreaWidgetContents_sample)
+            else:
+                check = False
+
+        datacursor.execute("SELECT material FROM database WHERE project = ?", (value,))
+        materialdata = datacursor.fetchall()
+        materialdata = list(dict.fromkeys(materialdata))
+        materialdata = sorted(materialdata, key=lambda x:(len(x), x))
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
+            if box.text() not in materialdata:
+                box.deleteLater()
+        for i in range(len(materialdata)):
+            for box in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
+                if box.text() == materialdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(materialdata[i], self.ui.scrollAreaWidgetContents_material)
+            else:
+                check = False
+
+        datacursor.execute("SELECT print FROM database WHERE project = ?", (value,))
+        printdata = datacursor.fetchall()
+        printdata = list(dict.fromkeys(printdata))
+        printdata.sort()
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
+            if box.text() not in printdata:
+                box.deleteLater()
+        for i in range(len(printdata)):
+            for box in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
+                if box.text() == printdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(printdata[i], self.ui.scrollAreaWidgetContents_print)
+            else:
+                check = False
+
+        datacursor.execute("SELECT orientation FROM database WHERE project = ?", (value,))
+        orientationdata = datacursor.fetchall()
+        orientationdata = list(dict.fromkeys(orientationdata))
+        orientationdata.sort()
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
+            if box.text() not in orientationdata:
+                box.deleteLater()
+        for i in range(len(orientationdata)):
+            for box in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
+                if box.text() == orientationdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(orientationdata[i], self.ui.scrollAreaWidgetContents_orientation)
+            else:
+                check = False
+
+        datacursor.execute("SELECT apara FROM database WHERE project = ?", (value,))
+        Adata = datacursor.fetchall()
+        Adata = list(dict.fromkeys(Adata))
+        Adata.sort()
+        # create checkboxes
+        for box in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
+            if box.text() not in Adata:
+                box.deleteLater()
+        for i in range(len(Adata)):
+            for box in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
+                if box.text() == Adata[i]:
+                    check = True
+            if check == False:   
+                if Adata[i] != None: 
+                    self.addCheckbox(Adata[i], self.ui.scrollAreaWidgetContents_A)
+            else:
+                check = False
+
+        datacursor.execute("SELECT bpara FROM database WHERE project = ?", (value,))
+        Bdata = datacursor.fetchall()
+        Bdata = list(dict.fromkeys(Bdata))
+        Bdata.sort()
+        for box in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
+            if box.text() not in Bdata:
+                box.deleteLater()
+        for i in range(len(Bdata)):
+            for box in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
+                if box.text() == Bdata[i]:
+                    check = True
+            if check == False: 
+                if Bdata[i] != None:   
+                    self.addCheckbox(Bdata[i], self.ui.scrollAreaWidgetContents_B)
+            else:
+                check = False
+
+        datacursor.execute("SELECT fpara FROM database WHERE project = ?", (value,))
+        Fdata = datacursor.fetchall()
+        Fdata = list(dict.fromkeys(Fdata))
+        Fdata.sort()
+        for box in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
+            if box.text() not in Fdata:
+                box.deleteLater()
+        for i in range(len(Fdata)):
+            for box in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
+                if box.text() == Fdata[i]:
+                    check = True
+            if check == False: 
+                if Fdata[i] != None:   
+                    self.addCheckbox(Fdata[i], self.ui.scrollAreaWidgetContents_F)
+            else:
+                check = False
+
+        datacursor.execute("SELECT gpara FROM database WHERE project = ?", (value,))
+        Gdata = datacursor.fetchall()
+        Gdata = list(dict.fromkeys(Gdata))
+        Gdata.sort()
+        for box in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
+            if box.text() not in Gdata:
+                box.deleteLater()
+        for i in range(len(Gdata)):
+            for box in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
+                if box.text() == Gdata[i]:
+                    check = True
+            if check == False:   
+                if Gdata[i] != None: 
+                    self.addCheckbox(Gdata[i], self.ui.scrollAreaWidgetContents_G)
+            else:
+                check = False
+
+        datacursor.execute("SELECT speed FROM database WHERE project = ?", (value,))
+        speeddata = datacursor.fetchall()
+        speeddata = list(dict.fromkeys(speeddata))
+        speeddata.sort()
+        for box in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
+            if box.text() not in speeddata:
+                box.deleteLater()
+        for i in range(len(speeddata)):
+            for box in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
+                if box.text() == speeddata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(str(speeddata[i]), self.ui.scrollAreaWidgetContents_speed)
+            else:
+                check = False
+
+        datacursor.execute("SELECT cycles FROM database WHERE project = ?", (value,))
+        cyclesdata = datacursor.fetchall()
+        cyclesdata = list(dict.fromkeys(cyclesdata))
+        cyclesdata.sort()
+        for box in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
+            if box.text() not in cyclesdata:
+                box.deleteLater()
+        for i in range(len(cyclesdata)):
+            for box in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
+                if box.text() == cyclesdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(str(cyclesdata[i]), self.ui.scrollAreaWidgetContents_cycles)
+            else:
+                check = False
+
+        datacursor.execute("SELECT steps FROM database WHERE project = ?", (value,))
+        stepsdata = datacursor.fetchall()
+        stepsdata = list(dict.fromkeys(stepsdata))
+        stepsdata.sort()
+        for box in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
+            if box.text() not in stepsdata:
+                box.deleteLater()
+        for i in range(len(stepsdata)):
+            for box in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
+                if box.text() == stepsdata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(str(stepsdata[i]), self.ui.scrollAreaWidgetContents_steps)
+            else:
+                check = False
+            
         #datacursor.execute(sqlstatement)
         
         
@@ -319,7 +578,6 @@ class MainWindow(QMainWindow):
         # get the data from the database into a temporary variable
         tempdata = datacursor.fetchall()
         # turn tempdata into a list (it is a tuple of tuples when using the fetchall method)
-        tempdata = [item for t in tempdata for item in t]
         # get the data from the database and make it usable for the graph
         self.splitData(tempdata)
         #print (self.otherdata)
@@ -362,14 +620,15 @@ class MainWindow(QMainWindow):
         index_test = self.data.index(searchkey_test)+1
         paraList = self.data[index_file].split("_")
         testList = self.data[index_test]
-        #print(paraList)
-        #print(testList)
+        print(paraList)
+        print(testList)
         projectdata.append(paraList[0])       
         designdata.append(paraList[1])
         sampledata.append(paraList[2])
         materialdata.append(paraList[3])
         printdata.append(paraList[4])
         orientationdata.append(paraList[5])
+        print(projectdata, designdata, sampledata, materialdata, printdata, orientationdata)
         # search for strings in the list beginning with A, B, G, F, T
         for i in range(len(paraList)):
             if paraList[i].startswith("A"):
@@ -394,7 +653,7 @@ class MainWindow(QMainWindow):
             gdata.append(None)
         if fcheck == False:
             fdata.append(None)
-        #print(adata, bdata, gdata, fdata, timestamp)
+        print(adata, bdata, gdata, fdata, timestamp)
 
         directiondata.append(testList[0][18:])
         speeddata.append(testList[1][14:])
@@ -404,7 +663,7 @@ class MainWindow(QMainWindow):
         sampleratedata.append(testList[5][12:])
         downsamplingdata.append(testList[6][11:])
         referencedata.append(testList[7][10:])
-        #print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
+        print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         # Add the data to the database
         for i in range(len(timestamp)):
@@ -429,121 +688,9 @@ class MainWindow(QMainWindow):
             datacursor.execute(Q_reference, (referencedata[i], timestamp[i]))
             datacursor.execute(Q_alldata, (self.rawdata[i], timestamp[i]))
             connection_data.commit()
-            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps, contacts, samplerate, downsample, reference, alldata from database")
-            #for x in datacursor:
-            #    print(x)
-
-
-        # Add the parsed data to the combox widget
-        ExistingProjects = [self.ui.comboBox_project.itemText(i) for i in range(self.ui.comboBox_project.count())]
-        for i in ExistingProjects:
-            if projectdata[0] == i:
-                check = True
-        if check == False:
-            self.ui.comboBox_project.addItems(projectdata)
-        else:
-            check = False
-
-        # Add checkboxes based on the parsed data
-        for y in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
-            if y.text() == designdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(designdata[0], self.ui.scrollAreaWidgetContents_design)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
-            if y.text() == sampledata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(sampledata[0], self.ui.scrollAreaWidgetContents_sample)
-        else:
-            check = False
-        
-        for y in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
-            if y.text() == materialdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(materialdata[0], self.ui.scrollAreaWidgetContents_material)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
-            if y.text() == printdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(printdata[0], self.ui.scrollAreaWidgetContents_print)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
-            if y.text() == orientationdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(orientationdata[0], self.ui.scrollAreaWidgetContents_orientation)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
-            if y.text() == adata[0]:
-                check=True
-        if check == False:
-            if adata[0] != None:
-                self.addCheckbox(adata[0], self.ui.scrollAreaWidgetContents_A)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
-            if y.text() == bdata[0]:
-                check=True
-        if check == False:
-            if bdata[0] != None:
-                self.addCheckbox(bdata[0], self.ui.scrollAreaWidgetContents_B)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
-            if y.text() == gdata[0]:
-                check=True
-        if check == False:
-            if gdata[0] != None:
-                self.addCheckbox(gdata[0], self.ui.scrollAreaWidgetContents_G)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
-            if y.text() == fdata[0]:
-                check=True
-        if check == False:
-            if fdata[0] != None:
-                self.addCheckbox(fdata[0], self.ui.scrollAreaWidgetContents_F)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
-            if y.text() == speeddata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(speeddata[0], self.ui.scrollAreaWidgetContents_speed)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
-            if y.text() == cyclesdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(cyclesdata[0], self.ui.scrollAreaWidgetContents_cycles)
-        else:
-            check = False
-
-        for y in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
-            if y.text() == stepsdata[0]:
-                check=True
-        if check == False:
-            self.addCheckbox(stepsdata[0], self.ui.scrollAreaWidgetContents_steps)
-        else:
-            check = False
+            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps from database")
+            for x in datacursor:
+                print(x)       
 
         self.rawdata.clear()
 
@@ -560,9 +707,8 @@ class MainWindow(QMainWindow):
             datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[i]),))
             #print (timestamps[i])
             for x in datacursor:
-                self.rawdata.append(x)   
                 # split data at \n
-                self.rawdata = self.rawdata[0][0].split('\n')   
+                self.rawdata = x.split('\n')  
                 self.rawdata.pop()   
                 #print(self.rawdata)
                 # split the data into four lists  
@@ -580,8 +726,8 @@ class MainWindow(QMainWindow):
         self.yunit = "Ohm"
         self.graphWidget.clear()
         self.graphWidget2.clear()
-        self.graphWidget.plotline(self.stepcount, self.R1, "timestamp here")
-        self.graphWidget2.plotline(self.stepcount, self.R2, "timestamp here")
+        self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
+        self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here")
         
         
 
@@ -621,7 +767,7 @@ class MainWindow(QMainWindow):
                         lines[0] = lines[0][:-1]
                         self.data.append(lines[0].split(','))
                         self.rawdata.append("".join(lines[2:])) 
-                    #print("Data added")  
+                    print("Data added")  
                     self.onclick_upload()
                     self.data.remove("File")
                     self.data.remove("Test")
