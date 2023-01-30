@@ -130,15 +130,9 @@ class MainWindow(QMainWindow):
         
 
         if value == "Hysterese (mean)":
-            self.splitData(["2023.01.12-17.59.26"])
-            self.xtext = "Time"
-            self.ytext = "Resistance"
-            self.xunit = "ms"
-            self.yunit = "Ohm"
-            self.graphWidget.clear()
-            self.graphWidget2.clear()
-            self.graphWidget.plotline(self.stepcount, self.R1, "timestamp goes here")
-            self.graphWidget2.plotline(self.stepcount, self.R2, "timestamp goes here")
+            data = ["2023.01.12-17.59.26"]
+            self.splitData(data)
+            
             
 
 
@@ -151,10 +145,15 @@ class MainWindow(QMainWindow):
             self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
             self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
-
+    # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
     def checkthedata(self):
+        # the current project is always the first filter and taken from the combobox
+        current_project = self.ui.comboBox_project.currentText()
+        # notthefirst is a variable to control the "AND"s in the sql statement
         notthefirst = False
+        # the sql statement is initialized as an empty string
         sqlcommand = ""
+        # each filter has a list of checked checkboxes. if the list is not empty, the filtering sql statement is extended
         if self.checkboxes_design:
             for value in self.checkboxes_design:
                 sqlcommand = sqlcommand + "design = " + "'" + str(value) + "'" + " OR "
@@ -237,13 +236,18 @@ class MainWindow(QMainWindow):
                 sqlcommand = sqlcommand + "steps = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
+        # if no filter was the first filter, the sql statement is empty and the function returns false
         if notthefirst == False:
             return False
+        # if the sql statement is not empty, the current project is added to the beginning of the statement and this statement is returned
         else:
-            sqlcommand = 'SELECT timestamp FROM database WHERE ' + sqlcommand
+            sqlcommand = 'SELECT timestamp FROM database WHERE project = ' + "'" + str(current_project) + "'" + " AND " + sqlcommand
         return sqlcommand
-    # Function to react to checkbox selection and print the name of the checkbox
-    def on_checkbox_changed(self):
+
+
+    # Function to check all checkboxes in every scroll area to know which daat to filter
+    def checktheboxes(self):
+        # first the filters are reset
         self.checkboxes_design = []
         self.checkboxes_sample = []
         self.checkboxes_material = []
@@ -256,11 +260,8 @@ class MainWindow(QMainWindow):
         self.checkboxes_speed = []
         self.checkboxes_cycles = []
         self.checkboxes_steps = []
-        current_project = self.ui.comboBox_project.currentText()
-        print("Current project: " + current_project)
-        tempdata2 = []
-        value = self.sender().text()
-        # iterate all checkboxes in all scroll areas
+        # the checkboxes are ordered by the corresponding scroll areas. 
+        # If any are checked, they are added to the corresponding list by their displayed names
         for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
             if i.isChecked():
                 self.checkboxes_design.append(i.text())
@@ -297,30 +298,33 @@ class MainWindow(QMainWindow):
         for i in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
             if i.isChecked():
                 self.checkboxes_steps.append(i.text())
-        
+
+    # Function to react to checkbox selection and update the graphs
+    def on_checkbox_changed(self):
+        current_project = self.ui.comboBox_project.currentText()   
+        # iterate all checkboxes in all scroll areas and add those that are checked to a list
+        self.checktheboxes()
+        # A note to which box was changed, for debugging purposes
+        value = self.sender().text()
         print("Checkbox " + value + " was changed.")
-        #print(self.checkthedata())
+        # checkthedata() returns the sql command to be executed or, if no checkboxes are checked, False 
         if self.checkthedata():
             datacursor.execute(self.checkthedata())
-        for i in datacursor:
-            print(i)
-        
-        tempdata = datacursor.fetchall()
-        # turn tempdata into a list
-        tempdata = [item for t in tempdata for item in t]
-        tempdata2.append(tempdata)
-        #print (tempdata2)
-        if self.sender().isChecked():
-            for t in tempdata2:
-                if t not in self.otherdata:
-                    self.otherdata.append(t)
+        # if no checkbox is checked, all the data from current project is selected
         else:
-            for t in tempdata2:
-                if t in self.otherdata:
-                    self.otherdata.remove(t)
+            datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (current_project, ))
+        # print statement for debugging purposes
+        #for i in datacursor:
+        #    print(i)
+        # get the data from the database into a temporary variable
+        tempdata = datacursor.fetchall()
+        # turn tempdata into a list (it is a tuple of tuples when using the fetchall method)
+        tempdata = [item for t in tempdata for item in t]
+        # get the data from the database and make it usable for the graph
+        self.splitData(tempdata)
         #print (self.otherdata)
-        self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
-        self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+        #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+        #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
 
 
@@ -358,8 +362,8 @@ class MainWindow(QMainWindow):
         index_test = self.data.index(searchkey_test)+1
         paraList = self.data[index_file].split("_")
         testList = self.data[index_test]
-        print(paraList)
-        print(testList)
+        #print(paraList)
+        #print(testList)
         projectdata.append(paraList[0])       
         designdata.append(paraList[1])
         sampledata.append(paraList[2])
@@ -390,7 +394,7 @@ class MainWindow(QMainWindow):
             gdata.append(None)
         if fcheck == False:
             fdata.append(None)
-        print(adata, bdata, gdata, fdata, timestamp)
+        #print(adata, bdata, gdata, fdata, timestamp)
 
         directiondata.append(testList[0][18:])
         speeddata.append(testList[1][14:])
@@ -400,7 +404,7 @@ class MainWindow(QMainWindow):
         sampleratedata.append(testList[5][12:])
         downsamplingdata.append(testList[6][11:])
         referencedata.append(testList[7][10:])
-        print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
+        #print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         # Add the data to the database
         for i in range(len(timestamp)):
@@ -431,7 +435,14 @@ class MainWindow(QMainWindow):
 
 
         # Add the parsed data to the combox widget
-        self.ui.comboBox_project.addItems(projectdata)
+        ExistingProjects = [self.ui.comboBox_project.itemText(i) for i in range(self.ui.comboBox_project.count())]
+        for i in ExistingProjects:
+            if projectdata[0] == i:
+                check = True
+        if check == False:
+            self.ui.comboBox_project.addItems(projectdata)
+        else:
+            check = False
 
         # Add checkboxes based on the parsed data
         for y in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
@@ -537,27 +548,42 @@ class MainWindow(QMainWindow):
         self.rawdata.clear()
 
 
-    #Function to split the data bulk into four lists
-    def splitData(self, timestamps):
+    # Function to split the data bulk into different list. This is used when raw data shall be displayed.
+    def splitData(self, timestamps = []):
         self.timecount.clear()
         self.stepcount.clear()
         self.R1.clear()
-        self.R2.clear()
-        self.rawdata.clear()
-        #get the data from the sql database depending on the timestamp
-        for timestamp in timestamps:
-            datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (timestamp,))
+        self.R2.clear()    
+        # get the data from the sql database depending on the timestamp
+        for i in range(len(timestamps)):
+            self.rawdata.clear()
+            datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[i]),))
+            #print (timestamps[i])
             for x in datacursor:
-                self.rawdata.append(x)           
-        #split data at \n
-        self.rawdata = self.rawdata[0][0].split('\n')
-        self.rawdata.pop()
-        #split the data into four lists
-        for i in range(len(self.rawdata)):
-            self.timecount.append(int(self.rawdata[i].split(',')[0])-int(self.rawdata[0].split(',')[0]))
-            self.stepcount.append(int(self.rawdata[i].split(',')[1]))
-            self.R1.append(int(self.rawdata[i].split(',')[2]))
-            self.R2.append(int(self.rawdata[i].split(',')[3]))
+                self.rawdata.append(x)   
+                # split data at \n
+                self.rawdata = self.rawdata[0][0].split('\n')   
+                self.rawdata.pop()   
+                #print(self.rawdata)
+                # split the data into four lists  
+                for i in range(len(self.rawdata)):
+                    self.timecount.append(int(self.rawdata[i].split(',')[0])-int(self.rawdata[0].split(',')[0]))
+                    self.stepcount.append(int(self.rawdata[i].split(',')[1]))
+                    self.R1.append(int(self.rawdata[i].split(',')[2]))
+                    self.R2.append(int(self.rawdata[i].split(',')[3]))
+
+        
+        # draw from data
+        self.xtext = "Time"
+        self.ytext = "Resistance"
+        self.xunit = "ms"
+        self.yunit = "Ohm"
+        self.graphWidget.clear()
+        self.graphWidget2.clear()
+        self.graphWidget.plotline(self.stepcount, self.R1, "timestamp here")
+        self.graphWidget2.plotline(self.stepcount, self.R2, "timestamp here")
+        
+        
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
@@ -595,7 +621,7 @@ class MainWindow(QMainWindow):
                         lines[0] = lines[0][:-1]
                         self.data.append(lines[0].split(','))
                         self.rawdata.append("".join(lines[2:])) 
-                    print("Data added")  
+                    #print("Data added")  
                     self.onclick_upload()
                     self.data.remove("File")
                     self.data.remove("Test")
