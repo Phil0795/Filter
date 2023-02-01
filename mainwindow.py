@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_cycles = []
         self.checkboxes_steps = []
         self.checkboxes = []
+        self.toplot = None
         self.widget = QCheckBox()
         self.xtext= "Data"
         self.ytext= "k-factor"
@@ -398,7 +399,8 @@ class MainWindow(QMainWindow):
 
 
     def on_cbvalue_changed(self, value):
-        
+        self.toplot = value 
+        # run an update on the graph
 
         if value == "Hysterese (mean)":
             data = ["2023.01.12-17.59.26"]
@@ -732,16 +734,25 @@ class MainWindow(QMainWindow):
 
         
         # draw from data
-        self.xtext = "Time"
-        self.ytext = "Resistance"
-        self.xunit = "ms"
-        self.yunit = "Ohm"
+        self.plotupdate()
+        
+    def plotupdate(self):
         self.graphWidget.clear()
         self.graphWidget2.clear()
-        self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
-        self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here")
-        
-        
+        if self.toplot != None:
+            self.xtext = "Time"
+            self.ytext = "Resistance"
+            self.xunit = "ms"
+            self.yunit = "Ohm"
+            self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
+            self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here") 
+        elif self.toplot == "somethingelse":
+            self.xtext = "A"
+            self.ytext = "B"
+            self.xunit = "unit"
+            self.yunit = "unit"
+            self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
+            self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here")
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
