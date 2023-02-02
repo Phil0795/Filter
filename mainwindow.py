@@ -8,6 +8,7 @@ from PySide6.QtCore import QFile, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
 import pyqtgraph as pg
+import numpy as np
 
 
 # Important:
@@ -21,6 +22,10 @@ connection_data = sqlite3.connect('testproject.db')
 connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
 datacursor = connection_data.cursor()
+
+connection_data.row_factory = None
+datacursor_tuple = connection_data.cursor()
+
 # Create a table if it doesn't exist
 datacursor.execute("Create TABLE IF NOT EXISTS database (timestamp text PRIMARY KEY ON CONFLICT IGNORE, project int, design int, sample int, material int, print int, orientation int, apara int, bpara int, fpara int, gpara int, direction short int, speed short int, cycles int, steps int, contacts int, samplerate int, downsample int, reference str, alldata str, k_fac_mean float, k_fac_devi float, Hyst_mean float, Hyst_devi float)")
 # Define commands to update the database
@@ -76,6 +81,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_cycles = []
         self.checkboxes_steps = []
         self.checkboxes = []
+        self.timestamp = []
         self.toplot = None
         self.widget = QCheckBox()
         self.xtext= "Data"
@@ -103,7 +109,7 @@ class MainWindow(QMainWindow):
         self.ui.widget_bot.setLayout(QVBoxLayout())
         self.ui.widget_bot.layout().addWidget(self.graphWidget2)
 
-    # Function to clear checkboxes - do not use this. It was only used for debugging.
+    # Function to clear checkboxes - do not use this. It was only used for debugging. Checkboxes are cleared only when needed.
     def clear_checkboxes(self):
         # Get all the checkboxes in the scroll area and delete them
         for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
@@ -399,24 +405,13 @@ class MainWindow(QMainWindow):
 
 
     def on_cbvalue_changed(self, value):
-        self.toplot = value 
-        # run an update on the graph
 
         if value == "Hysterese (mean)":
-            data = ["2023.01.12-17.59.26"]
-            self.splitData(data)
-            
-            
-
-
+            self.toplot = None
         else:
-            print("Combox value changed to: " + value)
-            self.xtext = "Entsprechendes x zu " + value
-            self.ytext = "Entsprechendes y zu " + value
-            self.xunit = "Einheit x zu " + value
-            self.yunit = "Einheit y zu " + value
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
+            self.toplot = value
+        print(self.toplot)
+        self.plotupdate()
 
     # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
     def checkthedata(self):
@@ -702,8 +697,8 @@ class MainWindow(QMainWindow):
             datacursor.execute(Q_reference, (referencedata[i], timestamp[i]))
             datacursor.execute(Q_alldata, (self.rawdata[i], timestamp[i]))
             connection_data.commit()
-            datacursor.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps from database")
-            for x in datacursor:
+            datacursor_tuple.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps from database")
+            for x in datacursor_tuple:
                 print(x)       
 
         self.rawdata.clear()
@@ -714,11 +709,13 @@ class MainWindow(QMainWindow):
         self.timecount.clear()
         self.stepcount.clear()
         self.R1.clear()
-        self.R2.clear()    
+        self.R2.clear() 
+        self.timestamp.clear()
         # get the data from the sql database depending on the timestamp
-        for i in range(len(timestamps)):
+        for t in range(len(timestamps)):
             self.rawdata.clear()
-            datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[i]),))
+            datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[t]),))
+            self.timestamp.append(timestamps[t])  #.replace(".", ""))
             #print (timestamps[i])
             for x in datacursor:
                 # split data at \n
@@ -726,33 +723,56 @@ class MainWindow(QMainWindow):
                 self.rawdata.pop()   
                 #print(self.rawdata)
                 # split the data into four lists  
-                for i in range(len(self.rawdata)):
-                    self.timecount.append(int(self.rawdata[i].split(',')[0])-int(self.rawdata[0].split(',')[0]))
-                    self.stepcount.append(int(self.rawdata[i].split(',')[1]))
-                    self.R1.append(int(self.rawdata[i].split(',')[2]))
-                    self.R2.append(int(self.rawdata[i].split(',')[3]))
+                for raw in range(len(self.rawdata)):
+                    self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
+                    self.stepcount.append(int(self.rawdata[raw].split(',')[1]))
+                    self.R1.append(int(self.rawdata[raw].split(',')[2]))
+                    self.R2.append(int(self.rawdata[raw].split(',')[3]))
+            self.stepcount.append("Next")
+            self.R1.append("Next")
+            self.R2.append("Next")
+            self.timecount.append("Next")
+                
 
-        
         # draw from data
         self.plotupdate()
         
     def plotupdate(self):
         self.graphWidget.clear()
         self.graphWidget2.clear()
-        if self.toplot != None:
+        keyword = "Next"
+        if self.toplot == None:
             self.xtext = "Time"
             self.ytext = "Resistance"
             self.xunit = "ms"
             self.yunit = "Ohm"
-            self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
-            self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here") 
-        elif self.toplot == "somethingelse":
-            self.xtext = "A"
-            self.ytext = "B"
-            self.xunit = "unit"
-            self.yunit = "unit"
-            self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
-            self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here")
+
+            for t in range(len(self.timestamp)):
+                # get the list up to but not including the next keyword
+                temp_timecount = self.timecount[:self.timecount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                self.graphWidget.plotline(temp_timecount, temp_R1, str(self.timestamp[t]))
+                self.graphWidget2.plotline(temp_timecount, temp_R2, str(self.timestamp[t]))
+                # delete the list up to the next keyword
+                del self.timecount[:self.timecount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+
+                self.findbytimestamp(self.timestamp[t])
+
+
+
+
+
+                
+            #self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
+            #self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here") 
+
+    def findbytimestamp(self, timestamp):
+        datacursor_tuple.execute("SELECT design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps FROM database WHERE timestamp = ?", (timestamp,))
+        x = datacursor_tuple.fetchall()
+        print(x)
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
