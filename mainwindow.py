@@ -4,15 +4,14 @@ import os
 import sqlite3
 
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtCore import QFile, Qt
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
 import pyqtgraph as pg
 import numpy as np
 
 
 # Important:
-# You need to run the following command to generate the ui_form.py file
+# You need to run the following command to generate the ui_form.py file! This has to be done when the file was updated using QTCreator!
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_MainWindow
@@ -86,8 +85,8 @@ class MainWindow(QMainWindow):
         self.timestamp = []
         self.toplot = None
         self.widget = QCheckBox()
-        self.xtext= "Data"
-        self.ytext= "k-factor"
+        self.xtext= None
+        self.ytext= None
         self.xunit= None
         self.yunit= None
         self.x = [1,2,3,4,5,6,7,8,9,10]
@@ -408,11 +407,8 @@ class MainWindow(QMainWindow):
 
     def on_cbvalue_changed(self, value):
 
-        if value == "Hysterese (mean)":
-            self.toplot = None
-        else:
-            self.toplot = value
-        # print(self.toplot)
+        self.toplot = value
+        print(self.toplot)
         self.checktheboxes()
         if self.checkthedata():
             datacursor.execute(self.checkthedata())
@@ -734,8 +730,8 @@ class MainWindow(QMainWindow):
                 for raw in range(len(self.rawdata)):
                     self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
                     self.stepcount.append(int(self.rawdata[raw].split(',')[1]))
-                    self.R1.append((int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
-                    self.R2.append((int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
+                    self.R1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
+                    self.R2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
             self.stepcount.append("Next")
             self.R1.append("Next")
             self.R2.append("Next")
@@ -749,11 +745,58 @@ class MainWindow(QMainWindow):
         self.graphWidget.clear()
         self.graphWidget2.clear()
         keyword = "Next"
-        if self.toplot == None:
+        if self.toplot == "Resistance / Time":
             self.xtext = "Time"
-            self.ytext = "Resistance"
-            self.xunit = "ms"
-            self.yunit = "Ohm"
+            self.ytext = "Change in Resistance"
+            self.xunit = "(ms)"
+            self.yunit = "(%)"
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+
+            for t in range(len(self.timestamp)):
+                self.color = self.colors[counter % 6]
+                # get the list up to but not including the next keyword
+                temp_timecount = self.timecount[:self.timecount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                # delete the list up to the next keyword
+                del self.timecount[:self.timecount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
+        elif self.toplot == "Resistance / Steps":
+            self.xtext = "Step"
+            self.ytext = "Change in Resistance"
+            self.xunit = ""
+            self.yunit = "(%)"
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+
+            for t in range(len(self.timestamp)):
+                self.color = self.colors[counter % 6]
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                # delete the list up to the next keyword
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
+
+        elif self.toplot == "Peaks over time":
+            self.xtext = "Time"
+            self.ytext = "Change in Resistance"
+            self.xunit = "(ms)"
+            self.yunit = "(%)"
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
 
             for t in range(len(self.timestamp)):
@@ -770,15 +813,6 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
-                print (self.findbytimestamp(self.timestamp[t]))
-
-
-
-
-
-                
-            #self.graphWidget.plotline(self.timecount, self.R1, "timestamp here")
-            #self.graphWidget2.plotline(self.timecount, self.R2, "timestamp here") 
 
     def findbytimestamp(self, timestamp):
         datacursor_tuple.execute("SELECT design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps FROM database WHERE timestamp = ?", (timestamp,))
@@ -845,11 +879,10 @@ class ScatterPlot(pg.PlotWidget):
         self.setLabel(axis='left', text=ytext, units=yunit)
         self.showGrid(x=True, y=True, alpha=0.5)
 
-    def refresh(self, xtext, xunit, ytext, yunit, x, y, coding):
+    def refresh(self, xtext, xunit, ytext, yunit):
         self.clear()
-        self.setLabel(axis='bottom', text=xtext, units=xunit)
-        self.setLabel(axis='left', text=ytext, units=yunit)
-        self.plotnew(x, y, coding)
+        self.setLabel(axis='bottom', text=xtext + " " + xunit)
+        self.setLabel(axis='left', text=ytext + " " + yunit)
 
     def plotnew(self, x, y, coding):
         self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
