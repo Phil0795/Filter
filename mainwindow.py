@@ -3,7 +3,7 @@ import sys
 import os
 import sqlite3
 
-
+from PySide6.QtGui import QBrush, QColor
 from PySide6.QtCore import QFile, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
@@ -68,6 +68,8 @@ class MainWindow(QMainWindow):
         self.timecount = []
         self.R1 = []
         self.R2 = []
+        self.colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        self.color = self.colors[0]
         self.checkboxes_design = []
         self.checkboxes_sample = []
         self.checkboxes_material = []
@@ -410,8 +412,14 @@ class MainWindow(QMainWindow):
             self.toplot = None
         else:
             self.toplot = value
-        print(self.toplot)
-        self.plotupdate()
+        # print(self.toplot)
+        self.checktheboxes()
+        if self.checkthedata():
+            datacursor.execute(self.checkthedata())
+        else:
+            datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
+        tempdata = datacursor.fetchall()
+        self.splitData(tempdata)
 
     # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
     def checkthedata(self):
@@ -629,15 +637,15 @@ class MainWindow(QMainWindow):
         index_test = self.data.index(searchkey_test)+1
         paraList = self.data[index_file].split("_")
         testList = self.data[index_test]
-        print(paraList)
-        print(testList)
+        # print(paraList)
+        # print(testList)
         projectdata.append(paraList[0])       
         designdata.append(paraList[1])
         sampledata.append(paraList[2])
         materialdata.append(paraList[3])
         printdata.append(paraList[4])
         orientationdata.append(paraList[5])
-        print(projectdata, designdata, sampledata, materialdata, printdata, orientationdata)
+        # print(projectdata, designdata, sampledata, materialdata, printdata, orientationdata)
         # search for strings in the list beginning with A, B, G, F, T
         for i in range(len(paraList)):
             if paraList[i].startswith("A"):
@@ -662,7 +670,7 @@ class MainWindow(QMainWindow):
             gdata.append(None)
         if fcheck == False:
             fdata.append(None)
-        print(adata, bdata, gdata, fdata, timestamp)
+        # print(adata, bdata, gdata, fdata, timestamp)
 
         directiondata.append(testList[0][18:])
         speeddata.append(testList[1][14:])
@@ -672,7 +680,7 @@ class MainWindow(QMainWindow):
         sampleratedata.append(testList[5][12:])
         downsamplingdata.append(testList[6][11:])
         referencedata.append(testList[7][10:])
-        print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
+        # print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         # Add the data to the database
         for i in range(len(timestamp)):
@@ -726,8 +734,8 @@ class MainWindow(QMainWindow):
                 for raw in range(len(self.rawdata)):
                     self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
                     self.stepcount.append(int(self.rawdata[raw].split(',')[1]))
-                    self.R1.append(int(self.rawdata[raw].split(',')[2]))
-                    self.R2.append(int(self.rawdata[raw].split(',')[3]))
+                    self.R1.append((int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
+                    self.R2.append((int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
             self.stepcount.append("Next")
             self.R1.append("Next")
             self.R2.append("Next")
@@ -746,20 +754,23 @@ class MainWindow(QMainWindow):
             self.ytext = "Resistance"
             self.xunit = "ms"
             self.yunit = "Ohm"
+            counter = 0
 
             for t in range(len(self.timestamp)):
+                self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
                 temp_timecount = self.timecount[:self.timecount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
-                self.graphWidget.plotline(temp_timecount, temp_R1, str(self.timestamp[t]))
-                self.graphWidget2.plotline(temp_timecount, temp_R2, str(self.timestamp[t]))
+                self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
                 del self.timecount[:self.timecount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
 
-                self.findbytimestamp(self.timestamp[t])
+                print (self.findbytimestamp(self.timestamp[t]))
 
 
 
@@ -772,7 +783,11 @@ class MainWindow(QMainWindow):
     def findbytimestamp(self, timestamp):
         datacursor_tuple.execute("SELECT design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps FROM database WHERE timestamp = ?", (timestamp,))
         x = datacursor_tuple.fetchall()
-        print(x)
+        # remove None values from the list
+        x = [[i for i in sublist if i is not None] for sublist in x]
+        x = ["_".join(str(i) for i in sublist) for sublist in x]
+        string = x[0]
+        return string
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):
@@ -839,9 +854,9 @@ class ScatterPlot(pg.PlotWidget):
     def plotnew(self, x, y, coding):
         self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
 
-    def plotline(self, x, y, coding):
-        self.addItem(pg.ScatterPlotItem(x, y, pen='red', symbol='o', size=5, data=coding, hoverable=True, brush=pg.mkBrush(255, 0, 0, 120)))
-        self.addItem(pg.PlotCurveItem(x, y, pen='r'))
+    def plotline(self, x, y, coding, color):
+        self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=5, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
+        self.addItem(pg.PlotCurveItem(x, y, pen=pg.mkPen(color=color, width=2)))
 
 
 if __name__ == "__main__":
