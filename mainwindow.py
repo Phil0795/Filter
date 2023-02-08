@@ -83,6 +83,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_steps = []
         self.checkboxes = []
         self.timestamp = []
+        self.cycle = None
         self.toplot = None
         self.widget = QCheckBox()
         self.xtext= None
@@ -109,6 +110,7 @@ class MainWindow(QMainWindow):
         self.ui.widget_top.layout().addWidget(self.graphWidget)
         self.ui.widget_bot.setLayout(QVBoxLayout())
         self.ui.widget_bot.layout().addWidget(self.graphWidget2)
+        self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
 
     # Function to clear checkboxes - do not use this. It was only used for debugging. Checkboxes are cleared only when needed.
     def clear_checkboxes(self):
@@ -798,6 +800,7 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
+
         elif self.toplot == "Resistance / Steps":
             self.xtext = "Step"
             self.ytext = "Change in Resistance"
@@ -806,13 +809,32 @@ class MainWindow(QMainWindow):
             self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            
 
             for t in range(len(self.timestamp)):
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
                 self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
+                for i in range(len(temp_stepcount)):
+                    if max_step-temp_stepcount[i] <=4:
+                        maxstepreached = True
+                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+
+                # create a list from temp_stepcount from cyclebreak to cyclebreak
+                temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
+                temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
+                temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
                 self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
@@ -841,6 +863,7 @@ class MainWindow(QMainWindow):
                 temp_R2 = []
                 switch = 1
                 runningnumber = 1
+                self.cycle = self.ui.spinBox_cycle.value()
                 # find the highest and lowest values in the list temp_stepcount with an accepted difference of 4
                 # this code then saves these peaks into a new list which is plotted. 
                 # the switch is needed so only one peak in each cycle is counted
@@ -848,20 +871,23 @@ class MainWindow(QMainWindow):
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
                 for i in range(len(temp_stepcount1)):
-                    if switch == 1:
-                        if (max_step-temp_stepcount1[i]) <= 4:
-                            temp_stepcount.append(runningnumber)
-                            runningnumber += 1
-                            temp_R1.append(temp_R11[i])
-                            temp_R2.append(temp_R21[i])
-                            switch = 0
+                    if runningnumber > self.cycle:
+                        break
                     else:
-                        if (temp_stepcount1[i] <= 4):
-                            #temp_stepcount.append(runningnumber)
-                            #runningnumber += 1
-                            #temp_R1.append(temp_R11[i])
-                            #temp_R2.append(temp_R21[i])
-                            switch = 1                             
+                        if switch == 1:
+                            if (max_step-temp_stepcount1[i]) <= 4:
+                                temp_stepcount.append(runningnumber)
+                                runningnumber += 1
+                                temp_R1.append(temp_R11[i])
+                                temp_R2.append(temp_R21[i])
+                                switch = 0
+                        else:
+                            if (temp_stepcount1[i] <= 4):
+                                #temp_stepcount.append(runningnumber)
+                                #runningnumber += 1
+                                #temp_R1.append(temp_R11[i])
+                                #temp_R2.append(temp_R21[i])
+                                switch = 1                             
                 self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
@@ -869,6 +895,17 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
+
+    def whatcyclesir(self):
+        self.cycle = self.ui.spinBox_cycle.value()
+        self.checktheboxes()
+        if self.checkthedata():
+            datacursor.execute(self.checkthedata())
+        else:
+            datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
+        tempdata = datacursor.fetchall()
+        self.splitData(tempdata)
+
 
 
     def findbytimestamp(self, timestamp):
