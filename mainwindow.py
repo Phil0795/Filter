@@ -131,6 +131,8 @@ class MainWindow(QMainWindow):
             i.deleteLater()
         for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
             i.deleteLater()
+        for i in self.ui.scrollAreaWidgetContents_direction.findChildren(QCheckBox):
+            i.deleteLater()
         for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
             i.deleteLater()
         for i in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
@@ -176,6 +178,7 @@ class MainWindow(QMainWindow):
         Bdata = []
         Fdata = []
         Gdata = []
+        directiondata = []
         speeddata = []
         cyclesdata = []
         stepsdata = []
@@ -348,6 +351,23 @@ class MainWindow(QMainWindow):
             else:
                 check = False
 
+        datacursor.execute("SELECT direction FROM database WHERE project = ?", (value,))
+        directiondata = datacursor.fetchall()
+        directiondata = list(dict.fromkeys(directiondata))
+        directiondata.sort()
+        for box in self.ui.scrollAreaWidgetContents_direction.findChildren(QCheckBox):
+            if box.text() not in directiondata:
+                self.checkboxes.remove(box)
+                box.deleteLater()
+        for i in range(len(directiondata)):
+            for box in self.ui.scrollAreaWidgetContents_direction.findChildren(QCheckBox):
+                if box.text() == directiondata[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(directiondata[i], self.ui.scrollAreaWidgetContents_direction)
+            else:
+                check = False
+
         datacursor.execute("SELECT speed FROM database WHERE project = ?", (value,))
         speeddata = datacursor.fetchall()
         speeddata = list(dict.fromkeys(speeddata))
@@ -487,6 +507,13 @@ class MainWindow(QMainWindow):
                 sqlcommand = sqlcommand + "G = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
+        if self.checkboxes_direction:
+            if notthefirst:
+                sqlcommand = sqlcommand + " AND "
+            for value in self.checkboxes_direction:
+                sqlcommand = sqlcommand + "direction = " + "'" + str(value) + "'" + " OR "
+            sqlcommand = sqlcommand[:-4]
+            notthefirst = True
         if self.checkboxes_speed:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
@@ -529,6 +556,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_B = []
         self.checkboxes_F = []
         self.checkboxes_G = []
+        self.checkboxes_direction = []
         self.checkboxes_speed = []
         self.checkboxes_cycles = []
         self.checkboxes_steps = []
@@ -561,6 +589,9 @@ class MainWindow(QMainWindow):
         for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
             if i.isChecked():
                 self.checkboxes_G.append(i.text())
+        for i in self.ui.scrollAreaWidgetContents_direction.findChildren(QCheckBox):
+            if i.isChecked():
+                self.checkboxes_direction.append(i.text())
         for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
             if i.isChecked():
                 self.checkboxes_speed.append(i.text())
@@ -815,7 +846,7 @@ class MainWindow(QMainWindow):
 
 
     def findbytimestamp(self, timestamp):
-        datacursor_tuple.execute("SELECT design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps FROM database WHERE timestamp = ?", (timestamp,))
+        datacursor_tuple.execute("SELECT design, sample, material, print, orientation, apara, bpara, fpara, gpara, direction, speed, cycles, steps FROM database WHERE timestamp = ?", (timestamp,))
         x = datacursor_tuple.fetchall()
         # remove None values from the list
         x = [[i for i in sublist if i is not None] for sublist in x]
