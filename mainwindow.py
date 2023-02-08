@@ -822,9 +822,9 @@ class MainWindow(QMainWindow):
                 counter += 1
 
         elif self.toplot == "Peaks over time":
-            self.xtext = "Time"
+            self.xtext = "Peak #"
             self.ytext = "Change in Resistance"
-            self.xunit = "(ms)"
+            self.xunit = ""
             self.yunit = "(%)"
             self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -833,13 +833,39 @@ class MainWindow(QMainWindow):
             for t in range(len(self.timestamp)):
                 self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
-                temp_timecount = self.timecount[:self.timecount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
-                self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                temp_stepcount1 = self.stepcount[:self.stepcount.index(keyword)]
+                temp_R11 = self.R1[:self.R1.index(keyword)]
+                temp_R21 = self.R2[:self.R2.index(keyword)]
+                temp_stepcount = []
+                temp_R1 = []
+                temp_R2 = []
+                switch = 1
+                runningnumber = 1
+                # find the highest and lowest values in the list temp_stepcount with an accepted difference of 4
+                # this code then saves these peaks into a new list which is plotted. 
+                # the switch is needed so only one peak in each cycle is counted
+                # this code can also count the minimum peaks, this should be done seperately though, for better readability
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                for i in range(len(temp_stepcount1)):
+                    if switch == 1:
+                        if (max_step-temp_stepcount1[i]) <= 4:
+                            temp_stepcount.append(runningnumber)
+                            runningnumber += 1
+                            temp_R1.append(temp_R11[i])
+                            temp_R2.append(temp_R21[i])
+                            switch = 0
+                    else:
+                        if (temp_stepcount1[i] <= 4):
+                            #temp_stepcount.append(runningnumber)
+                            #runningnumber += 1
+                            #temp_R1.append(temp_R11[i])
+                            #temp_R2.append(temp_R21[i])
+                            switch = 1                             
+                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
-                del self.timecount[:self.timecount.index(keyword)+1]
+                del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
