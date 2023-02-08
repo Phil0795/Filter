@@ -70,13 +70,6 @@
          </spacer>
         </item>
         <item>
-         <widget class="QLabel" name="label_value">
-          <property name="text">
-           <string>Value</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QComboBox" name="comboBox_value">
           <item>
            <property name="text">
@@ -136,6 +129,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="label_oncycle">
+          <property name="text">
+           <string>on cycle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBox_cycle">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer_right">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -182,39 +189,25 @@
       </item>
       <item>
        <layout class="QGridLayout" name="detailselectLayout">
-        <item row="0" column="9">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>Speed</string>
+        <item row="1" column="0">
+         <widget class="QScrollArea" name="scrollArea_design">
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOn</enum>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="6">
-         <widget class="QLabel" name="label_14">
-          <property name="text">
-           <string>B-Parameter</string>
+          <property name="widgetResizable">
+           <bool>true</bool>
           </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="label_9">
-          <property name="text">
-           <string>Sample</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>Print char.</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>Design</string>
-          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_design">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>74</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_design"/>
+          </widget>
          </widget>
         </item>
         <item row="1" column="1">
@@ -230,7 +223,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>83</width>
+             <width>74</width>
              <height>754</height>
             </rect>
            </property>
@@ -239,9 +232,9 @@
          </widget>
         </item>
         <item row="0" column="10">
-         <widget class="QLabel" name="label_8">
+         <widget class="QLabel" name="label_6">
           <property name="text">
-           <string>Cycles</string>
+           <string>Speed</string>
           </property>
          </widget>
         </item>
@@ -249,62 +242,6 @@
          <widget class="QLabel" name="label_15">
           <property name="text">
            <string>F-Parameter</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4">
-         <widget class="QLabel" name="label_12">
-          <property name="text">
-           <string>Orientation</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="5">
-         <widget class="QLabel" name="label_13">
-          <property name="text">
-           <string>A-Parameter</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="8">
-         <widget class="QLabel" name="label_16">
-          <property name="text">
-           <string>G-Parameter</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Material</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QScrollArea" name="scrollArea_design">
-          <property name="verticalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOn</enum>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_design">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>82</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_design"/>
-          </widget>
-         </widget>
-        </item>
-        <item row="0" column="11">
-         <widget class="QLabel" name="label_17">
-          <property name="text">
-           <string>Steps</string>
           </property>
          </widget>
         </item>
@@ -324,7 +261,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>99</width>
+             <width>91</width>
              <height>754</height>
             </rect>
            </property>
@@ -342,7 +279,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>100</width>
+             <width>92</width>
              <height>754</height>
             </rect>
            </property>
@@ -351,78 +288,6 @@
              <enum>QLayout::SetNoConstraint</enum>
             </property>
            </layout>
-          </widget>
-         </widget>
-        </item>
-        <item row="1" column="4">
-         <widget class="QScrollArea" name="scrollArea_orientation">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_orientation">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>99</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_3"/>
-          </widget>
-         </widget>
-        </item>
-        <item row="1" column="5">
-         <widget class="QScrollArea" name="scrollArea_A">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_A">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>99</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_8"/>
-          </widget>
-         </widget>
-        </item>
-        <item row="1" column="6">
-         <widget class="QScrollArea" name="scrollArea_B">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_B">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>100</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_9"/>
-          </widget>
-         </widget>
-        </item>
-        <item row="1" column="7">
-         <widget class="QScrollArea" name="scrollArea_F">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_F">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>99</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_10"/>
           </widget>
          </widget>
         </item>
@@ -436,7 +301,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>100</width>
+             <width>91</width>
              <height>754</height>
             </rect>
            </property>
@@ -444,7 +309,7 @@
           </widget>
          </widget>
         </item>
-        <item row="1" column="9">
+        <item row="1" column="10">
          <widget class="QScrollArea" name="scrollArea_speed">
           <property name="widgetResizable">
            <bool>true</bool>
@@ -454,7 +319,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>99</width>
+             <width>91</width>
              <height>754</height>
             </rect>
            </property>
@@ -462,25 +327,28 @@
           </widget>
          </widget>
         </item>
-        <item row="1" column="10">
-         <widget class="QScrollArea" name="scrollArea_cycles">
-          <property name="widgetResizable">
-           <bool>true</bool>
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Material</string>
           </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_cycles">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>100</width>
-             <height>754</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_13"/>
-          </widget>
          </widget>
         </item>
-        <item row="1" column="11">
+        <item row="0" column="8">
+         <widget class="QLabel" name="label_16">
+          <property name="text">
+           <string>G-Parameter</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Print char.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="12">
          <widget class="QScrollArea" name="scrollArea_steps">
           <property name="widgetResizable">
            <bool>true</bool>
@@ -490,11 +358,175 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>99</width>
+             <width>91</width>
              <height>754</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_14"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="0" column="12">
+         <widget class="QLabel" name="label_17">
+          <property name="text">
+           <string>Steps</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Design</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="6">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>B-Parameter</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="5">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>A-Parameter</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Sample</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="11">
+         <widget class="QScrollArea" name="scrollArea_cycles">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_cycles">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>91</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_13"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="0" column="9">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Direction</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="7">
+         <widget class="QScrollArea" name="scrollArea_F">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_F">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>91</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_10"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="1" column="6">
+         <widget class="QScrollArea" name="scrollArea_B">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_B">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>91</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_9"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="1" column="4">
+         <widget class="QScrollArea" name="scrollArea_orientation">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_orientation">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>91</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_3"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>Orientation</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="11">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Cycles</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QScrollArea" name="scrollArea_A">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_A">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>91</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_8"/>
+          </widget>
+         </widget>
+        </item>
+        <item row="1" column="9">
+         <widget class="QScrollArea" name="scrollArea_Direction">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents_direction">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>92</width>
+             <height>754</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4"/>
           </widget>
          </widget>
         </item>
