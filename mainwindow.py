@@ -364,7 +364,7 @@ class MainWindow(QMainWindow):
                 if box.text() == directiondata[i]:
                     check = True
             if check == False:    
-                self.addCheckbox(directiondata[i], self.ui.scrollAreaWidgetContents_direction)
+                self.addCheckbox(str(directiondata[i]), self.ui.scrollAreaWidgetContents_direction)
             else:
                 check = False
 
