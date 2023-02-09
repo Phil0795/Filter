@@ -8,6 +8,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
 import pyqtgraph as pg
 import numpy as np
+from scipy.interpolate import interp1d
+from scipy import signal, ndimage
 
 
 # Important:
@@ -84,6 +86,7 @@ class MainWindow(QMainWindow):
         self.checkboxes = []
         self.timestamp = []
         self.cycle = None
+        self.cycleEnd = None
         self.toplot = None
         self.widget = QCheckBox()
         self.xtext= None
@@ -111,6 +114,7 @@ class MainWindow(QMainWindow):
         self.ui.widget_bot.setLayout(QVBoxLayout())
         self.ui.widget_bot.layout().addWidget(self.graphWidget2)
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
+        self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
 
     # Function to clear checkboxes - do not use this. It was only used for debugging. Checkboxes are cleared only when needed.
     def clear_checkboxes(self):
@@ -753,6 +757,10 @@ class MainWindow(QMainWindow):
             self.rawdata.clear()
             datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[t]),))
             self.timestamp.append(timestamps[t])  #.replace(".", ""))
+            tc = []
+            sc = []
+            r1 = []
+            r2 = []
             #print (timestamps[i])
             for x in datacursor:
                 # split data at \n
@@ -762,9 +770,14 @@ class MainWindow(QMainWindow):
                 # split the data into four lists  
                 for raw in range(len(self.rawdata)):
                     self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
+                    tc.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
                     self.stepcount.append(int(self.rawdata[raw].split(',')[1]))
+                    sc.append(int(self.rawdata[raw].split(',')[1]))
                     self.R1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
+                    r1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
                     self.R2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
+                    r2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
+                self.save_table(timestamps[t], tc, sc, r1, r2)
             self.stepcount.append("Next")
             self.R1.append("Next")
             self.R2.append("Next")
@@ -832,9 +845,94 @@ class MainWindow(QMainWindow):
                         maxstepreached = False
 
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
-                temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
-                temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
-                temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycle.value()]]
+                temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                # delete the list up to the next keyword
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
+
+        elif self.toplot == "1":
+            self.xtext = "Step"
+            self.ytext = "Change in Resistance"
+            self.xunit = ""
+            self.yunit = "(%)"
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            halfcyclebreaks = [0]
+            
+
+            for t in range(len(self.timestamp)):
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                self.color = self.colors[counter % 6]
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                for i in range(len(temp_stepcount)):
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
+                        halfcyclebreaks.append(i)
+                        maxstepreached = True
+                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+
+                print(halfcyclebreaks)
+                #function to interpolate the data
+                upwardssteps = temp_stepcount[halfcyclebreaks[2*self.ui.spinBox_cycle.value()-2]:halfcyclebreaks[2*self.ui.spinBox_cycle.value()-1]]                
+                downwardssteps = temp_stepcount[halfcyclebreaks[2*self.ui.spinBox_cycle.value()-1]:halfcyclebreaks[2*self.ui.spinBox_cycle.value()]]
+                upwardsR1 = temp_R1[halfcyclebreaks[2*self.ui.spinBox_cycle.value()-2]:halfcyclebreaks[2*self.ui.spinBox_cycle.value()-1]]
+                downwardsR1 = temp_R1[halfcyclebreaks[2*self.ui.spinBox_cycle.value()-1]:halfcyclebreaks[2*self.ui.spinBox_cycle.value()]]
+                #find indices of duplicates
+                indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1]
+                #delete duplicates
+                for i in range(len(indices)-1):
+                    del upwardssteps[indices[i]]
+                    del upwardsR1[indices[i]]
+                indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1]
+                for i in range(len(indices)-1):
+                    del downwardssteps[indices[i]]
+                    del downwardsR1[indices[i]]
+                mykind = 'cubic'
+                predictupwards = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value="extrapolate")
+                predictdownwards = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=np.NaN)
+                stepcount_detail = list(range(0, max_step+1))
+                p1 = ndimage.gaussian_filter1d(predictupwards(stepcount_detail), 20)
+                p2 = ndimage.gaussian_filter1d(predictdownwards(stepcount_detail), 20)
+                #print (stepcount_detail)
+                upwardcurve = np.array([predictupwards(x) for x in stepcount_detail])
+                #print(upwardcurve)
+                downwardcurve = np.array([predictdownwards(x) for x in stepcount_detail])
+                #self.graphWidget.plotline(stepcount_detail, upwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget.plotline(stepcount_detail, downwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
+                
+
+                #counter+=1
+                #self.color = self.colors[counter % 6]
+
+                self.graphWidget.plotline(stepcount_detail, p1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget.plotline(stepcount_detail, p2, self.findbytimestamp(self.timestamp[t]), self.color)
+
+                counter+=1
+                self.color = self.colors[counter % 6]
+
+                # create a list from temp_stepcount from cyclebreak to cyclebreak
+                temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
@@ -896,8 +994,16 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
+    def uppercyclechanged(self):
+        if self.ui.spinBox_cycleEnd.value() < self.ui.spinBox_cycle.value():
+            self.ui.spinBox_cycle.setValue(self.ui.spinBox_cycleEnd.value())
+        self.whatcyclesir()
+
     def whatcyclesir(self):
+        if self.ui.spinBox_cycle.value() > self.ui.spinBox_cycleEnd.value():
+            self.ui.spinBox_cycleEnd.setValue(self.ui.spinBox_cycle.value())
         self.cycle = self.ui.spinBox_cycle.value()
+        self.cycleEnd = self.ui.spinBox_cycleEnd.value()
         self.checktheboxes()
         if self.checkthedata():
             datacursor.execute(self.checkthedata())
@@ -916,6 +1022,22 @@ class MainWindow(QMainWindow):
         x = ["_".join(str(i) for i in sublist) for sublist in x]
         string = x[0]
         return string
+
+    def save_table(self, timestamp, timecount, stepcount, R1, R2):
+        # create a new table with the data from the selected timestamp
+        # this is done by creating a new table with the same name as the timestamp
+        # the data is then taken from the database, split into cycles and saved into the new table
+        timestamp = str(timestamp).replace(".", "_")
+        timestamp =str(timestamp).replace(" ", "_")
+        command = "CREATE TABLE IF NOT EXISTS \"" + timestamp + "\" (timecount int PRIMARY KEY ON CONFLICT IGNORE, stepcount int, R1 real, R2 real)"
+        datacursor.execute(command)
+        for i in range(len(timecount)):
+            datacursor.execute("INSERT OR IGNORE INTO \"" + timestamp + "\" (timecount) VALUES (?)", (timecount[i],))
+            datacursor.execute("UPDATE \"" + timestamp + "\" SET stepcount = ? WHERE timecount = ?", (stepcount[i], timecount[i]))
+            datacursor.execute("UPDATE \"" + timestamp + "\" SET R1 = ? WHERE timecount = ?", (R1[i], timecount[i]))
+            datacursor.execute("UPDATE \"" + timestamp + "\" SET R2 = ? WHERE timecount = ?", (R2[i], timecount[i]))
+
+
 
     # Function to add checkboxes
     def addCheckbox(self, name, parent):

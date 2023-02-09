@@ -86,8 +86,21 @@ class Ui_MainWindow(object):
         self.spinBox_cycle = QSpinBox(self.centralwidget)
         self.spinBox_cycle.setObjectName(u"spinBox_cycle")
         self.spinBox_cycle.setMinimum(1)
+        self.spinBox_cycle.setMaximum(5000)
 
         self.pselectLayout.addWidget(self.spinBox_cycle)
+
+        self.label_2 = QLabel(self.centralwidget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.pselectLayout.addWidget(self.label_2)
+
+        self.spinBox_cycleEnd = QSpinBox(self.centralwidget)
+        self.spinBox_cycleEnd.setObjectName(u"spinBox_cycleEnd")
+        self.spinBox_cycleEnd.setMinimum(1)
+        self.spinBox_cycleEnd.setMaximum(5000)
+
+        self.pselectLayout.addWidget(self.spinBox_cycleEnd)
 
         self.horizontalSpacer_right = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -386,6 +399,7 @@ class Ui_MainWindow(object):
         self.comboBox_value.setItemText(10, QCoreApplication.translate("MainWindow", u"7", None))
 
         self.label_oncycle.setText(QCoreApplication.translate("MainWindow", u"on cycle", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"to", None))
         self.pushButton_detail.setText(QCoreApplication.translate("MainWindow", u"Details", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Speed", None))
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"F-Parameter", None))

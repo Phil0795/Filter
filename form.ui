@@ -140,6 +140,26 @@
           <property name="minimum">
            <number>1</number>
           </property>
+          <property name="maximum">
+           <number>5000</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>to</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBox_cycleEnd">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>5000</number>
+          </property>
          </widget>
         </item>
         <item>
