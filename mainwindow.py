@@ -890,11 +890,12 @@ class MainWindow(QMainWindow):
                         halfcyclebreaks.append(i)
                         maxstepreached = False
 
-                #function to interpolate the data     
+                #function to interpolate the data 
+                print(halfcyclebreaks)  
                 num_iter = self.ui.spinBox_cycleEnd.value()-self.ui.spinBox_cycle.value()+1
             
-                for i in range(num_iter):
-                    lowercycle = self.ui.spinBox_cycle.value()+i
+                for iteration in range(num_iter):
+                    lowercycle = self.ui.spinBox_cycle.value()+iteration
                     upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
                     downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
                     upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
@@ -904,15 +905,17 @@ class MainWindow(QMainWindow):
                 #find indices of duplicates
                     indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1]
                 #delete duplicates
-                    for i in range(len(indices)-1):
-                        del upwardssteps[indices[i]]
-                        del upwardsR1[indices[i]]
-                        del upwardsR2[indices[i]]
+                    if indices:
+                        for index in indices:
+                            del upwardssteps[index]
+                            del upwardsR1[index]
+                            del upwardsR2[index]
                     indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1]
-                    for i in range(len(indices)-1):
-                        del downwardssteps[indices[i]]
-                        del downwardsR1[indices[i]]
-                        del downwardsR2[indices[i]]
+                    if indices:
+                        for index in indices:
+                            del downwardssteps[index]
+                            del downwardsR1[index]
+                            del downwardsR2[index]
                     mykind = 'cubic'
                     predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
                     predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
