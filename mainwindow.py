@@ -777,7 +777,7 @@ class MainWindow(QMainWindow):
                     r1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
                     self.R2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
                     r2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
-                self.save_table(timestamps[t], tc, sc, r1, r2)
+                #self.save_table(timestamps[t], tc, sc, r1, r2)
             self.stepcount.append("Next")
             self.R1.append("Next")
             self.R2.append("Next")
@@ -873,6 +873,7 @@ class MainWindow(QMainWindow):
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
                 self.color = self.colors[counter % 6]
+                halfcyclebreaks = [0]
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
@@ -894,50 +895,51 @@ class MainWindow(QMainWindow):
                 print(halfcyclebreaks)  
                 num_iter = self.ui.spinBox_cycleEnd.value()-self.ui.spinBox_cycle.value()+1
             
-                for iteration in range(num_iter):
-                    lowercycle = self.ui.spinBox_cycle.value()+iteration
-                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
-                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                lowercycle = self.ui.spinBox_cycle.value()
+                upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
+                downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
                 #find indices of duplicates
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1]
+                seen = set()
+                indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
                 #delete duplicates
-                    if indices:
-                        for index in indices:
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1]
-                    if indices:
-                        for index in indices:
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
-                    mykind = 'cubic'
-                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
-                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
-                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
-                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
-                    stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    #print (stepcount_detail)
-                    #upwardcurve = np.array([predictupwards(x) for x in stepcount_detail])
-                    #print(upwardcurve)
-                    #downwardcurve = np.array([predictdownwards(x) for x in stepcount_detail])
-                    #self.graphWidget.plotline(stepcount_detail, upwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
-                    #self.graphWidget.plotline(stepcount_detail, downwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
-                    #counter+=1
-                    #self.color = self.colors[counter % 6]
-                    self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
-                    self.graphWidget.plotline(stepcount_detail, pd_r1, self.findbytimestamp(self.timestamp[t]), self.color)
-                    self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
-                    self.graphWidget2.plotline(stepcount_detail, pd_r2, self.findbytimestamp(self.timestamp[t]), self.color)
+                if indices:
+                    for index in reversed(indices):
+                        del upwardssteps[index]
+                        del upwardsR1[index]
+                        del upwardsR2[index]
+                seen = set()
+                indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                if indices:
+                    for index in reversed(indices):
+                        del downwardssteps[index]
+                        del downwardsR1[index]
+                        del downwardsR2[index]
+                mykind = 'cubic'
+                predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
+                predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
+                predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
+                predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
+                stepcount_detail = list(range(0, max_step+1))
+                pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
+                pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
+                pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
+                pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                #print (stepcount_detail)
+                #upwardcurve = np.array([predictupwards(x) for x in stepcount_detail])
+                #print(upwardcurve)
+                #downwardcurve = np.array([predictdownwards(x) for x in stepcount_detail])
+                #self.graphWidget.plotline(stepcount_detail, upwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget.plotline(stepcount_detail, downwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
+                #counter+=1
+                #self.color = self.colors[counter % 6]
+                self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget.plotline(stepcount_detail, pd_r1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(stepcount_detail, pd_r2, self.findbytimestamp(self.timestamp[t]), self.color)
 
 
 
