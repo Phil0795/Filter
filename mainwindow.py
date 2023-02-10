@@ -1246,6 +1246,8 @@ class MainWindow(QMainWindow):
                 temp_stepcount = []
                 temp_R1 = []
                 temp_R2 = []
+                now_R1 = []
+                now_R2 = []
                 switch = 1
                 runningnumber = 1
                 self.cycle = self.ui.spinBox_cycle.value()
@@ -1262,19 +1264,26 @@ class MainWindow(QMainWindow):
                         if switch == 1:
                             if (max_step-temp_stepcount1[i]) <= 4:
                                 temp_stepcount.append(runningnumber)
-                                runningnumber += 1
                                 temp_R1.append(temp_R11[i])
                                 temp_R2.append(temp_R21[i])
                                 switch = 0
                         else:
                             if (temp_stepcount1[i] <= 4):
-                                #temp_stepcount.append(runningnumber)
-                                #runningnumber += 1
-                                #temp_R1.append(temp_R11[i])
-                                #temp_R2.append(temp_R21[i])
-                                switch = 1                             
-                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                                temp_R1.append(temp_R11[i])
+                                temp_R2.append(temp_R21[i])
+                                runningnumber += 1
+                                switch = 1    
+                            elif (i == len(temp_stepcount1)-1):
+                                temp_R1.append(temp_R11[i])
+                                temp_R2.append(temp_R21[i])
+                                runningnumber += 1
+                                switch = 1
+                                break
+                for c in range(len(temp_stepcount)):
+                    now_R1.append(abs(temp_R1[2*c]-temp_R1[2*c+1])/temp_R1[2*c+1]*100)
+                    now_R2.append(abs(temp_R2[2*c]-temp_R2[2*c+1])/temp_R2[2*c+1]*100)
+                self.graphWidget.plotline(temp_stepcount, now_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.graphWidget2.plotline(temp_stepcount, now_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
