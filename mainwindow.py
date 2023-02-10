@@ -1210,16 +1210,16 @@ class MainWindow(QMainWindow):
                     pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
                     pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
                     pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    div1 = np.add(np.abs(pu_r1),np.abs(pd_r1))/2
-                    div2 = np.add(np.abs(pu_r2),np.abs(pd_r2))/2
+                    div1 = np.abs(max(pu_r1)-min(pu_r1))
+                    div2 = np.abs(max(pu_r2)-min(pu_r2))
                     error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
                     stamp = [t]
                     err_r1 = [error1]
                     err_r2 = [error2]
 
-                    self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*10)
-                    self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*10)
+                    self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*100)
+                    self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*100)
                     counter+=1
                     self.color = self.colors[counter % 6]
 
