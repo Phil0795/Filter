@@ -1216,8 +1216,8 @@ class MainWindow(QMainWindow):
                     error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
                     stamp = [t]
-                    err_r1 = [error1]
-                    err_r2 = [error2]
+                    err_r1 = [error1*100]
+                    err_r2 = [error2*100]
 
                     self.graphWidget.plotnew(counter, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*100)
                     self.graphWidget2.plotnew(counter, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*100)
