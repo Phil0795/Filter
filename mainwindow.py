@@ -172,6 +172,7 @@ class MainWindow(QMainWindow):
         # find the corresponding project in the database and create a temporary database containing the data of the selected project
         # datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
         # uncheck all checkboxes
+        self.toplot = self.ui.comboBox_value.currentText()
         for checkbox in self.checkboxes:
             checkbox.setCheckState(Qt.CheckState.Unchecked)
         # declare list parameters
@@ -286,6 +287,9 @@ class MainWindow(QMainWindow):
 
         datacursor.execute("SELECT apara FROM database WHERE project = ?", (value,))
         Adata = datacursor.fetchall()
+        for i in range(len(Adata)):
+            if Adata[i] == None:
+                Adata[i] = "A0"
         Adata = list(dict.fromkeys(Adata))
         Adata.sort()
         # create checkboxes
@@ -305,6 +309,9 @@ class MainWindow(QMainWindow):
 
         datacursor.execute("SELECT bpara FROM database WHERE project = ?", (value,))
         Bdata = datacursor.fetchall()
+        for i in range(len(Bdata)):
+            if Bdata[i] == None:
+                Bdata[i] = "B0"
         Bdata = list(dict.fromkeys(Bdata))
         Bdata.sort()
         for box in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
@@ -323,6 +330,9 @@ class MainWindow(QMainWindow):
 
         datacursor.execute("SELECT fpara FROM database WHERE project = ?", (value,))
         Fdata = datacursor.fetchall()
+        for i in range(len(Fdata)):
+            if Fdata[i] == None:
+                Fdata[i] = "F0"
         Fdata = list(dict.fromkeys(Fdata))
         Fdata.sort()
         for box in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
@@ -341,6 +351,9 @@ class MainWindow(QMainWindow):
 
         datacursor.execute("SELECT gpara FROM database WHERE project = ?", (value,))
         Gdata = datacursor.fetchall()
+        for i in range(len(Gdata)):
+            if Gdata[i] == None:
+                Gdata[i] = "G0"
         Gdata = list(dict.fromkeys(Gdata))
         Gdata.sort()
         for box in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
@@ -428,7 +441,7 @@ class MainWindow(QMainWindow):
         #datacursor.execute(sqlstatement)
         
         
-        
+
 
 
     def on_cbvalue_changed(self, value):
@@ -610,7 +623,8 @@ class MainWindow(QMainWindow):
 
     # Function to react to checkbox selection and update the graphs
     def on_checkbox_changed(self):
-        current_project = self.ui.comboBox_project.currentText()   
+        current_project = self.ui.comboBox_project.currentText()  
+        self.toplot = self.ui.comboBox_value.currentText() 
         # iterate all checkboxes in all scroll areas and add those that are checked to a list
         self.checktheboxes()
         # A note to which box was changed, for debugging purposes
@@ -682,27 +696,27 @@ class MainWindow(QMainWindow):
         # search for strings in the list beginning with A, B, G, F, T
         for i in range(len(paraList)):
             if paraList[i].startswith("A"):
-                adata.append(paraList[i][1:])
+                adata.append(paraList[i])
                 acheck = True
             elif paraList[i].startswith("B"):
-                bdata.append(paraList[i][1:])
+                bdata.append(paraList[i])
                 bcheck = True
             elif paraList[i].startswith("G"):
-                gdata.append(paraList[i][1:])
+                gdata.append(paraList[i])
                 gcheck = True
             elif paraList[i].startswith("F"):
-                fdata.append(paraList[i][1:])
+                fdata.append(paraList[i])
                 fcheck = True
             elif paraList[i].startswith("T"):
                 timestamp.append(paraList[i][1:])
         if acheck == False:
-            adata.append(None)
+            adata.append("A0")
         if bcheck == False:
-            bdata.append(None)
+            bdata.append("B0")
         if gcheck == False:
-            gdata.append(None)
+            gdata.append("G0")
         if fcheck == False:
-            fdata.append(None)
+            fdata.append("F0")
         # print(adata, bdata, gdata, fdata, timestamp)
 
         directiondata.append(testList[0][18:])
