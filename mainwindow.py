@@ -653,6 +653,7 @@ class MainWindow(QMainWindow):
     def onclick_upload(self):
         def parsetestdata(str):
             indicator = str.rfind("=")
+            print (str[indicator+1:])
             return str[indicator+1:]
         acheck = False
         bcheck = False
@@ -689,8 +690,8 @@ class MainWindow(QMainWindow):
         timestamp.append(self.data[index_timestamp])
         samplelist = self.data[index_sample]
         testList = self.data[index_test]
-        # print(paraList)
-        # print(testList)
+        print(samplelist)
+        print(testList)
         projectdata.append(samplelist[0])       
         designdata.append(samplelist[1])
         sampledata.append(samplelist[2])
@@ -722,13 +723,13 @@ class MainWindow(QMainWindow):
             gdata.append("G0")
         # print(adata, bdata, gdata, fdata, timestamp)
         directiondata.append(parsetestdata(testList[0]))
-        speeddata.append(parsetestdata(testList[0]))
-        cyclesdata.append(parsetestdata(testList[0]))
-        stepsdata.append(parsetestdata(testList[0]))
-        contactsdata.append(parsetestdata(testList[0]))
-        sampleratedata.append(parsetestdata(testList[0]))
-        downsamplingdata.append(parsetestdata(testList[0]))
-        referencedata.append(parsetestdata(testList[0]))
+        speeddata.append(parsetestdata(testList[1]))
+        cyclesdata.append(parsetestdata(testList[2]))
+        stepsdata.append(parsetestdata(testList[3]))
+        contactsdata.append(parsetestdata(testList[4]))
+        sampleratedata.append(parsetestdata(testList[5]))
+        downsamplingdata.append(parsetestdata(testList[6]))
+        referencedata.append(parsetestdata(testList[7]))
         # print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         # Add the data to the database
@@ -851,9 +852,9 @@ class MainWindow(QMainWindow):
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 for i in range(len(temp_stepcount)):
-                    if max_step-temp_stepcount[i] <=4:
+                    if max_step-temp_stepcount[i] <=15:
                         maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
                         cyclebreaks.append(i)
                         maxstepreached = False
                     elif maxstepreached == True and i == len(temp_stepcount)-1:
@@ -1179,10 +1180,10 @@ class MainWindow(QMainWindow):
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=15:
                         halfcyclebreaks.append(i)
                         maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
                         cyclebreaks.append(i)
                         halfcyclebreaks.append(i)
                         maxstepreached = False
