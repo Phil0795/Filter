@@ -649,9 +649,11 @@ class MainWindow(QMainWindow):
         #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
 
-
     # Function to parse data
     def onclick_upload(self):
+        def parsetestdata(str):
+            indicator = str.rfind("=")
+            return str[indicator+1:]
         acheck = False
         bcheck = False
         gcheck = False
@@ -678,55 +680,55 @@ class MainWindow(QMainWindow):
         referencedata = []
 
         # Parse the first object in data list up to the first underscore
-        searchkey_file = "File"
+        searchkey_timestamp = "Timestamp"
+        searchkey_sample = "Sample"
         searchkey_test = "Test"
-        index_file = self.data.index(searchkey_file)+1
+        index_timestamp = self.data.index(searchkey_timestamp)+1
+        index_sample = self.data.index(searchkey_sample)+1
         index_test = self.data.index(searchkey_test)+1
-        paraList = self.data[index_file].split("_")
+        timestamp.append(self.data[index_timestamp])
+        samplelist = self.data[index_sample]
         testList = self.data[index_test]
         # print(paraList)
         # print(testList)
-        projectdata.append(paraList[0])       
-        designdata.append(paraList[1])
-        sampledata.append(paraList[2])
-        materialdata.append(paraList[3])
-        printdata.append(paraList[4])
-        orientationdata.append(paraList[5])
+        projectdata.append(samplelist[0])       
+        designdata.append(samplelist[1])
+        sampledata.append(samplelist[2])
+        materialdata.append(samplelist[3])
+        printdata.append(samplelist[4])
+        orientationdata.append(samplelist[5])
         # print(projectdata, designdata, sampledata, materialdata, printdata, orientationdata)
         # search for strings in the list beginning with A, B, G, F, T
-        for i in range(len(paraList)):
-            if paraList[i].startswith("A"):
-                adata.append(paraList[i])
+        for i in range(len(samplelist)):
+            if samplelist[i].startswith("A"):
+                adata.append(samplelist[i])
                 acheck = True
-            elif paraList[i].startswith("B"):
-                bdata.append(paraList[i])
+            elif samplelist[i].startswith("B"):
+                bdata.append(samplelist[i])
                 bcheck = True
-            elif paraList[i].startswith("G"):
-                gdata.append(paraList[i])
-                gcheck = True
-            elif paraList[i].startswith("F"):
-                fdata.append(paraList[i])
+            elif samplelist[i].startswith("F"):
+                fdata.append(samplelist[i])
                 fcheck = True
-            elif paraList[i].startswith("T"):
-                timestamp.append(paraList[i][1:])
+            elif samplelist[i].startswith("G"):
+                gdata.append(samplelist[i])
+                gcheck = True
         if acheck == False:
             adata.append("A0")
         if bcheck == False:
             bdata.append("B0")
-        if gcheck == False:
-            gdata.append("G0")
         if fcheck == False:
             fdata.append("F0")
+        if gcheck == False:
+            gdata.append("G0")
         # print(adata, bdata, gdata, fdata, timestamp)
-
-        directiondata.append(testList[0][18:])
-        speeddata.append(testList[1][14:])
-        cyclesdata.append(testList[2][7:])
-        stepsdata.append(testList[3][6:])
-        contactsdata.append(testList[4][9:])
-        sampleratedata.append(testList[5][12:])
-        downsamplingdata.append(testList[6][11:])
-        referencedata.append(testList[7][10:])
+        directiondata.append(parsetestdata(testList[0]))
+        speeddata.append(parsetestdata(testList[0]))
+        cyclesdata.append(parsetestdata(testList[0]))
+        stepsdata.append(parsetestdata(testList[0]))
+        contactsdata.append(parsetestdata(testList[0]))
+        sampleratedata.append(parsetestdata(testList[0]))
+        downsamplingdata.append(parsetestdata(testList[0]))
+        referencedata.append(parsetestdata(testList[0]))
         # print (directiondata, speeddata, cyclesdata, stepsdata, contactsdata, sampleratedata, downsamplingdata, referencedata)
 
         # Add the data to the database
@@ -1376,23 +1378,33 @@ class MainWindow(QMainWindow):
                 for duplicate in self.data:
                     if i[:-4] in duplicate:
                         dupcheck = True
-                #Check for duplicate files
+                # Check for duplicate files. Altough this is not needed, because the database uses unique timestamps to make dups impossible,
+                # this is a good check to save on computing time
                 if dupcheck == False:
-                    # Save the file name without .csv to the list
-                    self.data.append("File")
+                    # Save the file name without .csv to the list, it is the unique timestamp of this test
+                    self.data.append("Timestamp")
                     self.data.append(i[:-4])
                     # Parse the contents of the file line by line and save to a list
                     with open(directory + "/" + i, "r") as f:
-                        # Read the lines
+                        # Read the lines and save them in a list
                         lines = f.readlines()
-                        self.data.append("Test")
-                        # Loop through the lines
+                        # first line contains the sample parameters and the second line contains the test parameters
+                        # Remove the newline character from the end of these lines fisrt
                         lines[0] = lines[0][:-1]
-                        self.data.append(lines[0].split(','))
-                        self.rawdata.append("".join(lines[2:])) 
+                        lines[1] = lines[1][:-1]
+                        # Now we split the lines into a list of parameters
+                        self.data.append("Sample")
+                        self.data.append(lines[0].split('_'))
+                        self.data.append("Test")
+                        self.data.append(lines[1].split(','))
+                        # Line 2 is the header for the raw data, so we skip it and add the rest of the lines to the list
+                        self.rawdata.append("".join(lines[3:])) 
                     print("Data added")  
+                    # Now we add the parsed data into the database according to the parameters in the file
                     self.onclick_upload()
-                    self.data.remove("File")
+                    # Remove the keywords used in the onclick_upload function so we do not try to upload the same data again
+                    self.data.remove("Timestamp")
+                    self.data.remove("Sample")
                     self.data.remove("Test")
                 else:
                     # If the file is a duplicate, skip it
