@@ -1328,16 +1328,16 @@ class MainWindow(QMainWindow):
                     stamp = [t]
                     err_r1 = [error1*100]
                     err_r2 = [error2*100]
-                    listofmae1.append(error1*100)
-                    listofmae2.append(error2*100)
+                    listofmae1.append(round(error1*100,2))
+                    listofmae2.append(round(error2*100,2))
                     size = 5
                     for mae in listofmae1:
-                        if err_r1[0] == mae:
+                        if round(err_r1[0],2) == mae:
                             size += 10
                     self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, size)
                     size = 5
                     for mae in listofmae2:
-                        if err_r2[0] == mae:
+                        if round(err_r2[0],2) == mae:
                             size += 10
                     self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, size)
                     counter+=1
