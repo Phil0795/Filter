@@ -898,6 +898,7 @@ class MainWindow(QMainWindow):
             maxstepreached = False
             cyclebreaks = [0]
             halfcyclebreaks = [0]
+            self.canvas.axes.cla()
             
 
             for t in range(len(self.timestamp)):
@@ -972,16 +973,18 @@ class MainWindow(QMainWindow):
                     #self.color = self.colors[counter % 6]
                     self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
                     self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
+                    self.canvas.plot_line(stepcount_detail, pu_r1, 'r')
+                    self.canvas.plot_line(stepcount_detail, pd_r1, 'r')
                     self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
                     self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
                 counter+=1
                 self.color = self.colors[counter % 6]
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
-                temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
-                temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
-                temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
-                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                #temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                #temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                #temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
@@ -1459,7 +1462,7 @@ class MainWindow(QMainWindow):
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
-            self.canvas.plot_box(all_data, True, False, labels)
+            self.canvas.plot_box(all_data, self.canvas.axes, True, True, labels)
 
         elif self.toplot == "Peaks over time":
             self.xtext = "Peak #"
@@ -1653,12 +1656,13 @@ class ScatterPlot(pg.PlotWidget):
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
+        self.axes = fig.add_subplot(1, 1, 1)
+        #self.axes2 = fig.add_subplot(2, 1, 2)
         super(MplCanvas, self).__init__(fig)
 
-    def plot_box(self, all_data, vert=True, color=False, labels=["x1"]):
-        self.axes.cla() #clear self
-        self.axes.boxplot(all_data,
+    def plot_box(self, all_data, ax, vert=True, color=False, labels=["x1"]):
+        ax.cla() #clear self
+        ax.boxplot(all_data,
                          vert=vert,  # vertical box alignment
                          patch_artist=color,  # fill with color
                          labels=labels)  # will be used to label x-ticks
@@ -1677,7 +1681,6 @@ class MplCanvas(FigureCanvas):
         self.draw()
 
     def plot_line(self, x, y, color):
-        self.axes.cla()
         self.axes.plot(x, y, color=color)
         self.draw()
 
