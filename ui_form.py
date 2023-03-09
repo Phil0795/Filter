@@ -15,11 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QGridLayout,
-    QHBoxLayout, QLabel, QLayout, QMainWindow,
-    QMenuBar, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QSpinBox, QStatusBar, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QFrame,
+    QGridLayout, QHBoxLayout, QLabel, QLayout,
+    QMainWindow, QMenuBar, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QSpinBox, QStatusBar,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -116,6 +116,18 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.frame_toolbar = QFrame(self.centralwidget)
+        self.frame_toolbar.setObjectName(u"frame_toolbar")
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.frame_toolbar.sizePolicy().hasHeightForWidth())
+        self.frame_toolbar.setSizePolicy(sizePolicy)
+        self.frame_toolbar.setFrameShape(QFrame.StyledPanel)
+        self.frame_toolbar.setFrameShadow(QFrame.Raised)
+
+        self.horizontalLayout.addWidget(self.frame_toolbar)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)

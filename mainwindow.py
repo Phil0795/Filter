@@ -3,6 +3,9 @@ import sys
 import os
 import sqlite3
 
+
+
+
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
@@ -10,6 +13,12 @@ import pyqtgraph as pg
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy import signal, ndimage
+
+import matplotlib
+matplotlib.use('QtAgg')
+
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar, FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 
 # Important:
@@ -108,11 +117,16 @@ class MainWindow(QMainWindow):
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
+        self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+
+        self.ui.frame_toolbar.setLayout(QVBoxLayout())
+        self.ui.frame_toolbar.layout().addWidget(self.toolbar)
 
         self.ui.widget_top.setLayout(QVBoxLayout())
         self.ui.widget_top.layout().addWidget(self.graphWidget)
         self.ui.widget_bot.setLayout(QVBoxLayout())
-        self.ui.widget_bot.layout().addWidget(self.graphWidget2)
+        self.ui.widget_bot.layout().addWidget(self.canvas)
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
         self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
 
@@ -1083,15 +1097,21 @@ class MainWindow(QMainWindow):
                 self.color = self.colors[counter % 6]
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
+                margin = 5
+                datacursor.execute("SELECT speed FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                speed = datacursor.fetchall()[0]
+                datacursor.execute("SELECT samplerate FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                samplerate = datacursor.fetchall()[0]
+                margin = int(2*speed/(samplerate*100))
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=margin:
                         halfcyclebreaks.append(i)
                         maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                    if maxstepreached == True and temp_stepcount[i] <= margin:
                         cyclebreaks.append(i)
                         halfcyclebreaks.append(i)
                         maxstepreached = False
@@ -1348,6 +1368,99 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
 
+
+
+        elif self.toplot == "6":
+            self.xtext = "Sample #"
+            self.ytext = "MAE in Hysteresis _ Each Cycle"
+            self.xunit = ""
+            self.yunit = "(%)"
+            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            halfcyclebreaks = [0]
+            all_data = []
+            labels = []
+            
+
+            for t in range(len(self.timestamp)):
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                counter = 0
+                halfcyclebreaks = [0]
+                cyclebreaks = [0]
+                labels.append(self.findbytimestamp(self.timestamp[t]))
+                alldata_cycle = []
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                for i in range(len(temp_stepcount)):
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=15:
+                        halfcyclebreaks.append(i)
+                        maxstepreached = True
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+
+                #function to interpolate the data 
+                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
+                for iter in range(iternum):
+                    lowercycle = self.ui.spinBox_cycle.value()+iter
+                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
+                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    #find indices of duplicates
+                    seen = set()
+                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    #delete duplicates
+                    if indices:
+                        for index in reversed(indices):
+                            del upwardssteps[index]
+                            del upwardsR1[index]
+                            del upwardsR2[index]
+                    seen = set()
+                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    if indices:
+                        for index in reversed(indices):
+                            del downwardssteps[index]
+                            del downwardsR1[index]
+                            del downwardsR2[index]
+                    mykind = 'cubic'
+                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
+                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
+                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
+                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
+                    stepcount_detail = list(range(0, max_step+1))
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                    div1 = np.abs(max(pu_r1)-min(pu_r1))
+                    div2 = np.abs(max(pu_r2)-min(pu_r2))
+                    error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
+                    error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
+                    stamp = [t]
+                    alldata_cycle.append(error1)
+                    #alldata_cycle.append(error2)
+
+                    # delete the list up to the next keyword
+                all_data.append(alldata_cycle)
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+            self.canvas.plot_box(all_data, True, False, labels)
+
         elif self.toplot == "Peaks over time":
             self.xtext = "Peak #"
             self.ytext = "Change in Resistance"
@@ -1536,6 +1649,37 @@ class ScatterPlot(pg.PlotWidget):
         self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=5, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
         self.addItem(pg.PlotCurveItem(x, y, pen=pg.mkPen(color=color, width=2)))
 
+
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+    def plot_box(self, all_data, vert=True, color=False, labels=["x1"]):
+        self.axes.cla() #clear self
+        self.axes.boxplot(all_data,
+                         vert=vert,  # vertical box alignment
+                         patch_artist=color,  # fill with color
+                         labels=labels)  # will be used to label x-ticks
+        # Trigger the canvas to update and redraw.
+        self.draw()
+    
+    def plot_dot(self, x, y, color, size):
+        self.axes.cla() #clear self
+        self.axes.scatter(x, y, c=color, s=size)
+        # Trigger the canvas to update and redraw.
+        self.draw()
+
+    def update_dot(self, x, y, color, size):
+        self.axes.scatter(x, y, c=color, s=size)
+        # Trigger the canvas to update and redraw.
+        self.draw()
+
+    def plot_line(self, x, y, color):
+        self.axes.cla()
+        self.axes.plot(x, y, color=color)
+        self.draw()
 
 
 if __name__ == "__main__":
