@@ -8,7 +8,7 @@ import sqlite3
 
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QFileDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QHBoxLayout, QFileDialog
 import pyqtgraph as pg
 import numpy as np
 from scipy.interpolate import interp1d
@@ -113,20 +113,24 @@ class MainWindow(QMainWindow):
         # Connect button to function
         self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
         self.ui.pushButton.clicked.connect(self.readfromdatabase)
-        self.ui.pushButton_detail.clicked.connect(self.clear_checkboxes)
+        self.ui.pushButton_detail.clicked.connect(self.on_cbvalue_changed)
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
+        self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
         self.toolbar = NavigationToolbar(self.canvas, self)
+        self.toolbar2 = NavigationToolbar(self.canvas2, self)
 
         self.ui.frame_toolbar.setLayout(QVBoxLayout())
         self.ui.frame_toolbar.layout().addWidget(self.toolbar)
-
+        self.ui.frame_toolbar.layout().addWidget(self.toolbar2)
+        
         self.ui.widget_top.setLayout(QVBoxLayout())
-        self.ui.widget_top.layout().addWidget(self.graphWidget)
+        self.ui.widget_top.layout().addWidget(self.canvas)
         self.ui.widget_bot.setLayout(QVBoxLayout())
-        self.ui.widget_bot.layout().addWidget(self.canvas)
+        self.ui.widget_bot.layout().addWidget(self.canvas2)
+
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
         self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
 
@@ -1384,7 +1388,8 @@ class MainWindow(QMainWindow):
             maxstepreached = False
             cyclebreaks = [0]
             halfcyclebreaks = [0]
-            all_data = []
+            all_data1 = []
+            all_data2 = []
             labels = []
             
 
@@ -1394,8 +1399,9 @@ class MainWindow(QMainWindow):
                 counter = 0
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
-                labels.append(self.findbytimestamp(self.timestamp[t]))
-                alldata_cycle = []
+                labels.append(self.timestamp[t])
+                alldata1_cycle= []
+                alldata2_cycle = []
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
@@ -1454,15 +1460,17 @@ class MainWindow(QMainWindow):
                     error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
                     stamp = [t]
-                    alldata_cycle.append(error1)
-                    #alldata_cycle.append(error2)
+                    alldata1_cycle.append(error1)
+                    alldata2_cycle.append(error2)
 
                     # delete the list up to the next keyword
-                all_data.append(alldata_cycle)
+                all_data1.append(alldata1_cycle)
+                all_data2.append(alldata2_cycle)
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
-            self.canvas.plot_box(all_data, self.canvas.axes, True, True, labels)
+            self.canvas.plot_box(all_data1, self.canvas.axes, True, True, labels)
+            self.canvas2.plot_box(all_data2, self.canvas2.axes, True, True, labels)
 
         elif self.toplot == "Peaks over time":
             self.xtext = "Peak #"
