@@ -38,7 +38,7 @@ datacursor_tuple = connection_data.cursor()
 
 # Create a table if it doesn't exist
 datacursor.execute("Create TABLE IF NOT EXISTS database (timestamp text PRIMARY KEY ON CONFLICT IGNORE, project int, design int, sample int, material int, print int, orientation int, apara int, bpara int, fpara int, gpara int, direction short int, speed short int, cycles int, steps int, contacts int, samplerate int, downsample int, reference str, alldata str, k_fac_mean float, k_fac_devi float, Hyst_mean float, Hyst_devi float)")
-# Define commands to update the database
+# Define commands to update the database, this is done in SQLite syntax
 Q_timestamp = "INSERT OR IGNORE INTO database (timestamp) VALUES (?)"
 Q_project = "UPDATE database SET project = ? WHERE timestamp = ?"
 Q_design = "UPDATE database SET design = ? WHERE timestamp = ?"
@@ -78,7 +78,8 @@ class MainWindow(QMainWindow):
         self.timecount = []
         self.R1 = []
         self.R2 = []
-        self.colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        #self.colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        self.colors = ["r", "g", "b", "y", "m", "c"]
         self.color = self.colors[0]
         self.checkboxes_design = []
         self.checkboxes_sample = []
@@ -831,9 +832,11 @@ class MainWindow(QMainWindow):
             self.ytext = "Change in Resistance"
             self.xunit = "(ms)"
             self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
+            self.canvas.clear()
+            self.canvas2.clear()
 
             for t in range(len(self.timestamp)):
                 self.color = self.colors[counter % 6]
@@ -841,8 +844,11 @@ class MainWindow(QMainWindow):
                 temp_timecount = self.timecount[:self.timecount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
-                self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.canvas.plot_line(temp_timecount, temp_R1, self.color)
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_line(temp_timecount, temp_R2, self.color)
                 # delete the list up to the next keyword
                 del self.timecount[:self.timecount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
@@ -854,11 +860,13 @@ class MainWindow(QMainWindow):
             self.ytext = "Change in Resistance"
             self.xunit = ""
             self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
             maxstepreached = False
             cyclebreaks = [0]
+            self.canvas.clear()
+            self.canvas2.clear()
             
 
             for t in range(len(self.timestamp)):
@@ -883,26 +891,32 @@ class MainWindow(QMainWindow):
                 temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
-                self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.canvas.plot_dot(temp_stepcount, temp_R1, self.color, 5)
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_dot(temp_stepcount, temp_R2, self.color, 5)
+                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
-        elif self.toplot == "1":
+        elif self.toplot == "Hysteresis interpol.":
             self.xtext = "Step"
             self.ytext = "Change in Resistance"
             self.xunit = ""
             self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
             maxstepreached = False
             cyclebreaks = [0]
             halfcyclebreaks = [0]
-            self.canvas.axes.cla()
+            self.canvas.clear()
+            self.canvas2.clear()
+            
             
 
             for t in range(len(self.timestamp)):
@@ -975,14 +989,16 @@ class MainWindow(QMainWindow):
                     #self.graphWidget.plotline(stepcount_detail, downwardcurve, self.findbytimestamp(self.timestamp[t]), self.color)
                     #counter+=1
                     #self.color = self.colors[counter % 6]
-                    self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
-                    self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
-                    self.canvas.plot_line(stepcount_detail, pu_r1, 'r')
-                    self.canvas.plot_line(stepcount_detail, pd_r1, 'r')
-                    self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
-                    self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
-                counter+=1
-                self.color = self.colors[counter % 6]
+                    #self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
+                    #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
+                    self.canvas.plot_line(stepcount_detail, pu_r1, self.color)
+                    self.canvas.plot_line(stepcount_detail, pd_r1, self.color)
+                    self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+                    self.canvas2.plot_line(stepcount_detail, pu_r2, self.color)
+                    self.canvas2.plot_line(stepcount_detail, pd_r2, self.color)
+                    self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+                    #self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
+                    #self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
                 #temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 #temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
@@ -995,389 +1011,8 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
-        elif self.toplot == "2":
-            self.xtext = "Sample #"
-            self.ytext = "MAE in Hysteresis _ Each Cycle"
-            self.xunit = ""
-            self.yunit = ""
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            counter = 0
-            maxstepreached = False
-            cyclebreaks = [0]
-            halfcyclebreaks = [0]
-            
-
-            for t in range(len(self.timestamp)):
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
-                counter = 0
-                self.color = self.colors[counter % 6]
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
-                # get the list up to but not including the next keyword
-                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
-                for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
-                        halfcyclebreaks.append(i)
-                        maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 4:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-                    elif maxstepreached == True and i == len(temp_stepcount)-1:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-
-                #function to interpolate the data 
-                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
-                for iter in range(iternum):
-                    lowercycle = self.ui.spinBox_cycle.value()+iter
-                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
-                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
-                    mykind = 'cubic'
-                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
-                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
-                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
-                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
-                    stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    error1 = np.mean(np.abs(pu_r1 - pd_r1))
-                    error2 = np.mean(np.abs(pu_r2 - pd_r2))
-                    stamp = [t]
-                    err_r1 = [error1]
-                    err_r2 = [error2]
-
-                    self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*10)
-                    self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*10)
-                    counter+=1
-                    self.color = self.colors[counter % 6]
-
-                    # delete the list up to the next keyword
-                del self.stepcount[:self.stepcount.index(keyword)+1]
-                del self.R1[:self.R1.index(keyword)+1]
-                del self.R2[:self.R2.index(keyword)+1]
-
-        elif self.toplot == "3":
-            self.xtext = "Sample #"
-            self.ytext = "MAE in Hysteresis _ Each Cycle"
-            self.xunit = ""
-            self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            counter = 0
-            maxstepreached = False
-            cyclebreaks = [0]
-            halfcyclebreaks = [0]
-            
-
-            for t in range(len(self.timestamp)):
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
-                counter = 0
-                self.color = self.colors[counter % 6]
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
-                margin = 5
-                datacursor.execute("SELECT speed FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                speed = datacursor.fetchall()[0]
-                datacursor.execute("SELECT samplerate FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                samplerate = datacursor.fetchall()[0]
-                margin = int(2*speed/(samplerate*100))
-                # get the list up to but not including the next keyword
-                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
-                for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=margin:
-                        halfcyclebreaks.append(i)
-                        maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= margin:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-                    elif maxstepreached == True and i == len(temp_stepcount)-1:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-
-                #function to interpolate the data 
-                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
-                for iter in range(iternum):
-                    lowercycle = self.ui.spinBox_cycle.value()+iter
-                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
-                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
-                    mykind = 'cubic'
-                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
-                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
-                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
-                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
-                    stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    div1 = np.abs(max(pu_r1)-min(pu_r1))
-                    div2 = np.abs(max(pu_r2)-min(pu_r2))
-                    error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
-                    error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    stamp = [t]
-                    err_r1 = [error1]
-                    err_r2 = [error2]
-
-                    self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*100)
-                    self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*100)
-                    counter+=1
-                    self.color = self.colors[counter % 6]
-
-                    # delete the list up to the next keyword
-                del self.stepcount[:self.stepcount.index(keyword)+1]
-                del self.R1[:self.R1.index(keyword)+1]
-                del self.R2[:self.R2.index(keyword)+1]
-
-        elif self.toplot == "4":
-            self.xtext = "Sample #"
-            self.ytext = "MAE in Hysteresis _ Each Cycle"
-            self.xunit = ""
-            self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            counter = 0
-            maxstepreached = False
-            cyclebreaks = [0]
-            halfcyclebreaks = [0]
-            nextcolor = 0
-            
-
-            for t in range(len(self.timestamp)):
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
-                counter = 0
-                self.color = self.colors[nextcolor % 6]
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
-                # get the list up to but not including the next keyword
-                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
-                for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=15:
-                        halfcyclebreaks.append(i)
-                        maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 15:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-                    elif maxstepreached == True and i == len(temp_stepcount)-1:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-
-                #function to interpolate the data 
-                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
-                for iter in range(iternum):
-                    lowercycle = self.ui.spinBox_cycle.value()+iter
-                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
-                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
-                    mykind = 'cubic'
-                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
-                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
-                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
-                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
-                    stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    div1 = np.abs(max(pu_r1)-min(pu_r1))
-                    div2 = np.abs(max(pu_r2)-min(pu_r2))
-                    error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
-                    error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    stamp = [t]
-                    err_r1 = [error1*100]
-                    err_r2 = [error2*100]
-
-                    self.graphWidget.plotnew(counter, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, error1*100)
-                    self.graphWidget2.plotnew(counter, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, error2*100)
-                    counter+=1
-
-                    # delete the list up to the next keyword
-                del self.stepcount[:self.stepcount.index(keyword)+1]
-                del self.R1[:self.R1.index(keyword)+1]
-                del self.R2[:self.R2.index(keyword)+1]
-                nextcolor += 1
-
-        elif self.toplot == "5":
-            self.xtext = "Sample #"
-            self.ytext = "Mean Absolute Error"
-            self.xunit = ""
-            self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            counter = 0
-            precision = 4
-            maxstepreached = False
-            cyclebreaks = [0]
-            halfcyclebreaks = [0]
-            
-
-            for t in range(len(self.timestamp)):
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
-                counter = 0
-                self.color = self.colors[counter % 6]
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
-                # get the list up to but not including the next keyword
-                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
-                for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=precision:
-                        halfcyclebreaks.append(i)
-                        maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= precision:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-                    elif maxstepreached == True and i == len(temp_stepcount)-precision:
-                        cyclebreaks.append(i)
-                        halfcyclebreaks.append(i)
-                        maxstepreached = False
-                listofmae1 = []
-                listofmae2 = []
-                #function to interpolate the data 
-                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
-                for iter in range(iternum):
-                    lowercycle = self.ui.spinBox_cycle.value()+iter
-                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
-                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
-                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
-                    #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
-                    mykind = 'cubic'
-                    predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
-                    predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
-                    predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
-                    predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
-                    stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
-                    div1 = np.abs(max(pu_r1)-min(pu_r1))
-                    div2 = np.abs(max(pu_r2)-min(pu_r2))
-                    error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
-                    error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    stamp = [t]
-                    err_r1 = [error1*100]
-                    err_r2 = [error2*100]
-                    listofmae1.append(round(error1*100,2))
-                    listofmae2.append(round(error2*100,2))
-                    size = 5
-                    for mae in listofmae1:
-                        if round(err_r1[0],2) == mae:
-                            size += 10
-                    self.graphWidget.plotnew(stamp, err_r1, self.findbytimestamp(self.timestamp[t]), self.color, size)
-                    size = 5
-                    for mae in listofmae2:
-                        if round(err_r2[0],2) == mae:
-                            size += 10
-                    self.graphWidget2.plotnew(stamp, err_r2, self.findbytimestamp(self.timestamp[t]), self.color, size)
-                    counter+=1
-                    self.color = self.colors[counter % 6]
-
-                    # delete the list up to the next keyword
-                del self.stepcount[:self.stepcount.index(keyword)+1]
-                del self.R1[:self.R1.index(keyword)+1]
-                del self.R2[:self.R2.index(keyword)+1]
-
-
-
-        elif self.toplot == "6":
+    # Mean Absolute Error
+        elif self.toplot == "Boxplot MAE Hysteresis":
             self.xtext = "Sample #"
             self.ytext = "MAE in Hysteresis _ Each Cycle"
             self.xunit = ""
@@ -1470,69 +1105,11 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
             self.canvas.plot_box(all_data1, self.canvas.axes, True, True, labels)
+            self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
             self.canvas2.plot_box(all_data2, self.canvas2.axes, True, True, labels)
+            self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
 
-        elif self.toplot == "Peaks over time":
-            self.xtext = "Peak #"
-            self.ytext = "Change in Resistance"
-            self.xunit = ""
-            self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            counter = 0
 
-            for t in range(len(self.timestamp)):
-                self.color = self.colors[counter % 6]
-                # get the list up to but not including the next keyword
-                temp_stepcount1 = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R11 = self.R1[:self.R1.index(keyword)]
-                temp_R21 = self.R2[:self.R2.index(keyword)]
-                temp_stepcount = []
-                temp_R1 = []
-                temp_R2 = []
-                now_R1 = []
-                now_R2 = []
-                switch = 1
-                runningnumber = 1
-                self.cycle = self.ui.spinBox_cycle.value()
-                # find the highest and lowest values in the list temp_stepcount with an accepted difference of 4
-                # this code then saves these peaks into a new list which is plotted. 
-                # the switch is needed so only one peak in each cycle is counted
-                # this code can also count the minimum peaks, this should be done seperately though, for better readability
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
-                for i in range(len(temp_stepcount1)):
-                    if runningnumber > self.cycle:
-                        break
-                    else:
-                        if switch == 1:
-                            if (max_step-temp_stepcount1[i]) <= 4:
-                                temp_stepcount.append(runningnumber)
-                                temp_R1.append(temp_R11[i])
-                                temp_R2.append(temp_R21[i])
-                                switch = 0
-                        else:
-                            if (temp_stepcount1[i] <= 4):
-                                temp_R1.append(temp_R11[i])
-                                temp_R2.append(temp_R21[i])
-                                runningnumber += 1
-                                switch = 1    
-                            elif (i == len(temp_stepcount1)-1):
-                                temp_R1.append(temp_R11[i])
-                                temp_R2.append(temp_R21[i])
-                                runningnumber += 1
-                                switch = 1
-                                break
-                for c in range(len(temp_stepcount)):
-                    now_R1.append(abs(temp_R1[2*c]-temp_R1[2*c+1])/temp_R1[2*c+1]*100)
-                    now_R2.append(abs(temp_R2[2*c]-temp_R2[2*c+1])/temp_R2[2*c+1]*100)
-                self.graphWidget.plotline(temp_stepcount, now_R1, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.graphWidget2.plotline(temp_stepcount, now_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                # delete the list up to the next keyword
-                del self.stepcount[:self.stepcount.index(keyword)+1]
-                del self.R1[:self.R1.index(keyword)+1]
-                del self.R2[:self.R2.index(keyword)+1]
-                counter += 1
 
     def uppercyclechanged(self):
         if self.ui.spinBox_cycleEnd.value() < self.ui.spinBox_cycle.value():
@@ -1677,16 +1254,22 @@ class MplCanvas(FigureCanvas):
         # Trigger the canvas to update and redraw.
         self.draw()
     
+    def clear(self):
+        self.axes.cla()
+
+    def update_axes(self, titletext, xtext, ytext):
+        self.axes.set_title(titletext)
+        self.axes.set_xlabel(xtext)
+        self.axes.set_ylabel(ytext)
+        self.axes.xaxis.set_label_coords(-0.01, -0.04)
+        self.draw()
+
+
     def plot_dot(self, x, y, color, size):
-        self.axes.cla() #clear self
         self.axes.scatter(x, y, c=color, s=size)
         # Trigger the canvas to update and redraw.
         self.draw()
 
-    def update_dot(self, x, y, color, size):
-        self.axes.scatter(x, y, c=color, s=size)
-        # Trigger the canvas to update and redraw.
-        self.draw()
 
     def plot_line(self, x, y, color):
         self.axes.plot(x, y, color=color)
