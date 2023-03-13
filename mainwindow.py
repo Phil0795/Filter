@@ -26,6 +26,7 @@ from matplotlib.figure import Figure
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_form import Ui_MainWindow
+from ui_detailwindow import Ui_DetWindow
 
 #Create a database in RAM
 connection_data = sqlite3.connect('testproject.db')
@@ -114,7 +115,7 @@ class MainWindow(QMainWindow):
         # Connect button to function
         self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
         self.ui.pushButton.clicked.connect(self.readfromdatabase)
-        self.ui.pushButton_detail.clicked.connect(self.on_cbvalue_changed)
+        self.ui.pushButton_detail.clicked.connect(self.onclick_detail)
 
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -122,6 +123,7 @@ class MainWindow(QMainWindow):
         self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar2 = NavigationToolbar(self.canvas2, self)
+        self.detailwindow = DetailWindow(parent=self)
 
         self.ui.frame_toolbar.setLayout(QVBoxLayout())
         self.ui.frame_toolbar.layout().addWidget(self.toolbar)
@@ -135,7 +137,7 @@ class MainWindow(QMainWindow):
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
         self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
 
-    # Function to clear checkboxes - do not use this. It was only used for debugging. Checkboxes are cleared only when needed.
+    # Function to clear checkboxes - do not use this! It was only used for debugging. Checkboxes are cleared only when needed.
     def clear_checkboxes(self):
         # Get all the checkboxes in the scroll area and delete them
         for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
@@ -185,6 +187,12 @@ class MainWindow(QMainWindow):
             else:
                 check = False 
 
+    def onclick_detail(self):
+        if self.detailwindow.isVisible():
+            self.detailwindow.hide()
+        else:
+            self.detailwindow.show()
+    
     # Function to react to combox selection
     def on_cbproject_changed(self, value):
         print("Combox project changed to: " + value)
@@ -457,6 +465,7 @@ class MainWindow(QMainWindow):
             else:
                 check = False
             
+        self.set_detailWindow()
         #datacursor.execute(sqlstatement)
         
         
@@ -473,6 +482,7 @@ class MainWindow(QMainWindow):
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
         tempdata = datacursor.fetchall()
+        self.set_detailWindow(tempdata)
         self.splitData(tempdata)
 
     # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
@@ -660,6 +670,7 @@ class MainWindow(QMainWindow):
         #    print(i)
         # get the data from the database into a temporary variable
         tempdata = datacursor.fetchall()
+        self.set_detailWindow(tempdata)
         # turn tempdata into a list (it is a tuple of tuples when using the fetchall method)
         # get the data from the database and make it usable for the graph
         self.splitData(tempdata)
@@ -780,6 +791,12 @@ class MainWindow(QMainWindow):
 
         self.rawdata.clear()
 
+    def set_detailWindow(self, timestamps = []):
+        timestampslong = []
+        for stamp in timestamps:
+            timestampslong.append(self.findbytimestamp(stamp))
+        self.detailwindow.renew_checkboxes(timestampslong)
+
 
     # Function to split the data bulk into different list. This is used when raw data shall be displayed.
     def splitData(self, timestamps = []):
@@ -788,6 +805,14 @@ class MainWindow(QMainWindow):
         self.R1.clear()
         self.R2.clear() 
         self.timestamp.clear()
+        #remove all timestamps that are not also in self.detailwindow.checked_cb
+        for stamp in timestamps:
+            if self.findbytimestamp(stamp) in self.detailwindow.unchecked_cb:
+                timestamps.remove(stamp)
+            else:
+                pass
+        print (self.detailwindow.unchecked_cb)
+        print (timestamps)
         # get the data from the sql database depending on the timestamp
         for t in range(len(timestamps)):
             self.rawdata.clear()
@@ -1249,8 +1274,8 @@ class MainWindow(QMainWindow):
         # remove given characters from the list
         notinteresting = ["A0", "B0", "F0", "G0"]
         x = [[i for i in sublist if i not in notinteresting] for sublist in x]
-        x = [".".join(str(i) for i in sublist) for sublist in x]
-        string = x[0]
+        x = ["_".join(str(i) for i in sublist) for sublist in x]
+        string = timestamp + "_" + x[0]
         return string
 
 
@@ -1387,6 +1412,57 @@ class MplCanvas(FigureCanvas):
     def plot_line(self, x, y, color):
         self.axes.plot(x, y, color=color)
         self.draw()
+
+class DetailWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_DetWindow()
+        self.ui.setupUi(self)
+        self.checkboxes = []
+        self.unchecked_cb = []
+        self.parent_to_boxes = self.ui.scrollAreaWidgetContents
+    
+    def renew_checkboxes(self, timestamps):
+        check = False
+        for box in self.parent_to_boxes.findChildren(QCheckBox):           
+            if box.text() not in timestamps:
+                self.checkboxes.remove(box)
+                box.deleteLater()
+        for i in range(len(timestamps)):
+            for box in self.parent_to_boxes.findChildren(QCheckBox):
+                if box.text() == timestamps[i]:
+                    check = True
+            if check == False:    
+                self.addCheckbox(timestamps[i])
+            else:
+                check = False
+        self.checktheboxes()
+
+    def addCheckbox(self, name):
+        self.parent_to_boxes.setLayout(QVBoxLayout())
+        checkbox = QCheckBox(name)
+        self.checkboxes.append(checkbox)
+        self.parent_to_boxes.layout().addWidget(checkbox)
+        checkbox.stateChanged.connect(self.on_checkbox_changed)
+        checkbox.setChecked(True)
+        checkbox.setVisible(True)
+
+    def checktheboxes(self):
+        # first the filters are reset
+        self.unchecked_cb = []
+        # If any are checked, they are added to the corresponding list by their displayed names
+        for i in self.parent_to_boxes.findChildren(QCheckBox):
+            #if i is checked
+            if i.isChecked():
+                pass
+            #if i is not checked
+            else:
+                self.unchecked_cb.append(i.text())
+
+    def on_checkbox_changed(self):
+        self.checktheboxes()
+        #print (self.unchecked_cb)
+    
 
 
 if __name__ == "__main__":
