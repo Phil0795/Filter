@@ -1145,7 +1145,7 @@ class MainWindow(QMainWindow):
                 counter = 0
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
-                labels.append(self.timestamp[t])
+                labels.append(self.findbytimestamp(self.timestamp[t]))
                 alldata1_cycle= []
                 alldata2_cycle = []
                 # get the list up to but not including the next keyword
@@ -1205,7 +1205,6 @@ class MainWindow(QMainWindow):
                     div2 = np.abs(max(pu_r2)-min(pu_r2))
                     error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    stamp = [t]
                     alldata1_cycle.append(error1)
                     alldata2_cycle.append(error2)
 
@@ -1247,7 +1246,10 @@ class MainWindow(QMainWindow):
         x = datacursor_tuple.fetchall()
         # remove None values from the list
         x = [[i for i in sublist if i is not None] for sublist in x]
-        x = ["_".join(str(i) for i in sublist) for sublist in x]
+        # remove given characters from the list
+        notinteresting = ["A0", "B0", "F0", "G0"]
+        x = [[i for i in sublist if i not in notinteresting] for sublist in x]
+        x = [".".join(str(i) for i in sublist) for sublist in x]
         string = x[0]
         return string
 

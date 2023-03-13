@@ -83,12 +83,12 @@
           </item>
           <item>
            <property name="text">
-            <string>Hysterese (mean)</string>
+            <string>Hysteresis interpol.</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>Peaks over time</string>
+            <string>Boxplot MAE Hysteresis</string>
            </property>
           </item>
           <item>
