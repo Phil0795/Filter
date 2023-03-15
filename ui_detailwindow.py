@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QLabel, QMainWindow, QMenuBar,
-    QScrollArea, QSizePolicy, QStatusBar, QVBoxLayout,
-    QWidget)
+    QPushButton, QScrollArea, QSizePolicy, QStatusBar,
+    QVBoxLayout, QWidget)
 
 class Ui_DetWindow(object):
     def setupUi(self, MainWindow):
@@ -37,16 +37,20 @@ class Ui_DetWindow(object):
         self.label.setObjectName(u"label")
 
         self.verticalLayout.addWidget(self.label)
-
         self.scrollArea = QScrollArea(self.centralwidget)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 388, 557))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 388, 527))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.verticalLayout.addWidget(self.scrollArea)
+
+        self.pushButton_update = QPushButton(self.centralwidget)
+        self.pushButton_update.setObjectName(u"pushButton_update")
+
+        self.verticalLayout.addWidget(self.pushButton_update)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -65,5 +69,6 @@ class Ui_DetWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Uncheck those Datasets you do not want to display in the main window.", None))
+        self.pushButton_update.setText(QCoreApplication.translate("MainWindow", u"Update Plots", None))
     # retranslateUi
 
