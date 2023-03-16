@@ -859,6 +859,7 @@ class MainWindow(QMainWindow):
             self.canvas2.clear()
 
             for t in range(len(self.timestamp)):
+                label = self.findbytimestamp(self.timestamp[t])
                 self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
                 temp_timecount = self.timecount[:self.timecount.index(keyword)]
@@ -866,9 +867,9 @@ class MainWindow(QMainWindow):
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 #self.graphWidget.plotline(temp_timecount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_timecount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_line(temp_timecount, temp_R1, self.color)
+                self.canvas.plot_line(temp_timecount, temp_R1, self.color, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_line(temp_timecount, temp_R2, self.color)
+                self.canvas2.plot_line(temp_timecount, temp_R2, self.color, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.timecount[:self.timecount.index(keyword)+1]
@@ -891,6 +892,7 @@ class MainWindow(QMainWindow):
             
 
             for t in range(len(self.timestamp)):
+                label = self.findbytimestamp(self.timestamp[t])
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
                 self.color = self.colors[counter % 6]
@@ -914,9 +916,9 @@ class MainWindow(QMainWindow):
                 temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(temp_stepcount, temp_R1, self.color, 5)
+                self.canvas.plot_dot(temp_stepcount, temp_R1, self.color, 5, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(temp_stepcount, temp_R2, self.color, 5)
+                self.canvas2.plot_dot(temp_stepcount, temp_R2, self.color, 5, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
@@ -943,6 +945,7 @@ class MainWindow(QMainWindow):
             for t in range(len(self.timestamp)):
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
+                label = self.findbytimestamp(self.timestamp[t])
                 self.color = self.colors[counter % 6]
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
@@ -967,6 +970,8 @@ class MainWindow(QMainWindow):
                 #print(halfcyclebreaks)  
                 iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
                 for iter in range(iternum):
+                    if iter > 0:
+                        label = None
                     lowercycle = self.ui.spinBox_cycle.value()+iter
                     upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
                     downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
@@ -1012,11 +1017,11 @@ class MainWindow(QMainWindow):
                     #self.color = self.colors[counter % 6]
                     #self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
-                    self.canvas.plot_line(stepcount_detail, pu_r1, self.color)
-                    self.canvas.plot_line(stepcount_detail, pd_r1, self.color)
+                    self.canvas.plot_line(stepcount_detail, pu_r1, self.color, label)
+                    self.canvas.plot_line(stepcount_detail, pd_r1, self.color, None)
                     self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
-                    self.canvas2.plot_line(stepcount_detail, pu_r2, self.color)
-                    self.canvas2.plot_line(stepcount_detail, pd_r2, self.color)
+                    self.canvas2.plot_line(stepcount_detail, pu_r2, self.color, label)
+                    self.canvas2.plot_line(stepcount_detail, pd_r2, self.color, None)
                     self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
                     #self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
@@ -1051,6 +1056,7 @@ class MainWindow(QMainWindow):
             for t in range(len(self.timestamp)):
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
+                label = self.findbytimestamp(self.timestamp[t])
                 self.color = self.colors[counter % 6]
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
@@ -1075,6 +1081,8 @@ class MainWindow(QMainWindow):
                 #print(halfcyclebreaks)  
                 iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
                 for iter in range(iternum):
+                    if iter > 0:
+                        label = None
                     lowercycle = self.ui.spinBox_cycle.value()+iter
                     upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
                     downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
@@ -1120,11 +1128,11 @@ class MainWindow(QMainWindow):
                     #self.color = self.colors[counter % 6]
                     #self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
-                    self.canvas.plot_line(stepcount_detail, pu_r1, self.color)
-                    self.canvas.plot_line(stepcount_detail, pd_r1, self.color)
+                    self.canvas.plot_line(stepcount_detail, pu_r1, self.color, label)
+                    self.canvas.plot_line(stepcount_detail, pd_r1, self.color, None)
                     self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
-                    self.canvas2.plot_line(stepcount_detail, pu_r2, self.color)
-                    self.canvas2.plot_line(stepcount_detail, pd_r2, self.color)
+                    self.canvas2.plot_line(stepcount_detail, pu_r2, self.color, label)
+                    self.canvas2.plot_line(stepcount_detail, pd_r2, self.color, None)
                     self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
                     #self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
@@ -1134,8 +1142,8 @@ class MainWindow(QMainWindow):
                 temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
-                self.canvas.plot_line(temp_stepcount, temp_R1, self.color)
-                self.canvas2.plot_line(temp_stepcount, temp_R2, self.color)
+                self.canvas.plot_line(temp_stepcount, temp_R1, self.color, label)
+                self.canvas2.plot_line(temp_stepcount, temp_R2, self.color, label)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
@@ -1392,7 +1400,7 @@ class MplCanvas(FigureCanvas):
         legendlabels = []
         for i in range(len(defaultlabels)):
             legendlabels.append(defaultlabels[i] + ": " + labels[i])      
-        ax.legend(legendlabels, loc=1, fontsize=7)
+        ax.legend(legendlabels, facecolor = 'lightgray', loc=1, fontsize=7)
         # Trigger the canvas to update and redraw.
         self.draw()
     
@@ -1410,14 +1418,16 @@ class MplCanvas(FigureCanvas):
         self.draw()
 
 
-    def plot_dot(self, x, y, color, size):
-        self.axes.scatter(x, y, c=color, s=size)
+    def plot_dot(self, x, y, color, size, label):
+        self.axes.scatter(x, y, c=color, s=size, label=label)
+        self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
         # Trigger the canvas to update and redraw.
         self.draw()
 
 
-    def plot_line(self, x, y, color):
-        self.axes.plot(x, y, color=color)
+    def plot_line(self, x, y, color, label):
+        self.axes.plot(x, y, color=color, label=label)
+        self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
         self.draw()
 
 class DetailWindow(QMainWindow):
