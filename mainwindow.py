@@ -69,10 +69,16 @@ Q_Hyst_devi = "UPDATE database SET Hyst_devi = ? WHERE timestamp = ?"
 
 
 class MainWindow(QMainWindow):
+    # This is the initialisation of the main window. It is called when the program is started. It is the first function that is called.
+    # Here, all "global" variables are defined and the GUI is created. 
+    # Subwindows and Widgets are created here as well.
+    # functions are bound to buttons and other widgets here.
     def __init__(self, parent=None):
         super().__init__(parent)
+        # The GUI is created using the ui_form.py file that was generated using the command above.
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # -"These variables are used for"- parsing 
         self.data = []
         self.rawdata = []
         self.otherdata = []
@@ -80,9 +86,10 @@ class MainWindow(QMainWindow):
         self.timecount = []
         self.R1 = []
         self.R2 = []
-        #self.colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        # -""- setting the color of the graphs
         self.colors = ["r", "g", "b", "y", "m", "c"]
         self.color = self.colors[0]
+        # -""- parsing
         self.checkboxes_design = []
         self.checkboxes_sample = []
         self.checkboxes_material = []
@@ -97,6 +104,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_steps = []
         self.checkboxes = []
         self.timestamp = []
+        # -""- plotting
         self.cycle = None
         self.cycleEnd = None
         self.toplot = None
@@ -105,8 +113,6 @@ class MainWindow(QMainWindow):
         self.ytext= None
         self.xunit= None
         self.yunit= None
-        self.x = [1,2,3,4,5,6,7,8,9,10]
-        self.y = [3,3,3,4,4,5,5,5,5,5]
         self.coding = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 
@@ -117,74 +123,52 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
         self.ui.pushButton.clicked.connect(self.readfromdatabase)
         self.ui.pushButton_detail.clicked.connect(self.onclick_detail)
-
+        # These are the graphs that are shown in the main window. The ScatterPlot class uses pyqtgraph to create the graphs. This is a quick and dirty solution and legacy code.
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
+        # The Canvas class uses matplotlib to create the graphs. This is the new and better solution. (This can easily do boxplots etc and could even be further improved with seaborn etc.)
         self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
+        # These are the toolbars that are shown in the main window. They are used control mouse interactions with the canvases. One bar per canvas is needed.(afaik)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar2 = NavigationToolbar(self.canvas2, self)
+        # This is the detail window. It is created here but not shown yet. It is shown when the user clicks the "Detail" button. It is used to filter the data in detail.
         self.detailwindow = DetailWindow()
-        self.detailwindow.ui.pushButton_update.clicked.connect(self.testfunction)
+        self.detailwindow.ui.pushButton_update.clicked.connect(self.detailwindow_buttonpress)
 
+        # The following code gives a layout to the areas of the main window which are filled with the widgets defined above. (Which could not be created in the QTCreator)
+        # QVBoxLayout places all widgets on top of each other. QHBoxLayout places all widgets next to each other.
         self.ui.frame_toolbar.setLayout(QVBoxLayout())
+        # The widgets itself are then added to the layout().
         self.ui.frame_toolbar.layout().addWidget(self.toolbar)
         self.ui.frame_toolbar.layout().addWidget(self.toolbar2)
-        
+        #This is done for the graphs as well.
         self.ui.widget_top.setLayout(QVBoxLayout())
         self.ui.widget_top.layout().addWidget(self.canvas)
         self.ui.widget_bot.setLayout(QVBoxLayout())
         self.ui.widget_bot.layout().addWidget(self.canvas2)
-
+        # connecting spinboxes to functions.
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
         self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
 
-    def testfunction(self):
-        self.detailwindow.testfunction()
+    def detailwindow_buttonpress(self):
         timestamps = self.detailwindow.get_timestamps()
         self.splitData(timestamps)
-
-
-    # Function to clear checkboxes - do not use this! It was only used for debugging. Checkboxes are cleared only when needed.
-    def clear_checkboxes(self):
-        # Get all the checkboxes in the scroll area and delete them
-        for i in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_sample.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_material.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_print.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_orientation.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_A.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_B.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_F.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_G.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_direction.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_speed.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_cycles.findChildren(QCheckBox):
-            i.deleteLater()
-        for i in self.ui.scrollAreaWidgetContents_steps.findChildren(QCheckBox):
-            i.deleteLater()
         
     def readfromdatabase(self):
+        # This function reads the data from the database and makes it available for plotting.
+        # An empty list is created as a placeholder for the data.
         projectdata = []
+        # A variable for double-checking for duplicates is created.
         check = False
+        # All projects are read from the database. The data is stored in a the list.
         datacursor.execute("SELECT project FROM database")
         projectdata = datacursor.fetchall()
         # remove duplicates
         projectdata = list(dict.fromkeys(projectdata))      
-        # sort list by length and alphabet
+        # sort list by length and alphabet (makes it nice to look at)
         projectdata = sorted(projectdata, key=lambda x: (len(x), x))
-        print(projectdata)
+        # add the projects to the combobox in the main window. duplicates are filtered out(again) Just to be sure.
         for p in projectdata:
             ExistingProjects = [self.ui.comboBox_project.itemText(i) for i in range(self.ui.comboBox_project.count())]
             for obj in ExistingProjects:
@@ -195,17 +179,16 @@ class MainWindow(QMainWindow):
             else:
                 check = False 
 
+    # toggle detail window
     def onclick_detail(self):
         if self.detailwindow.isVisible():
             self.detailwindow.hide()
         else:
             self.detailwindow.show()
     
-    # Function to react to combox selection
+    # Function to react to project selection in the combox
     def on_cbproject_changed(self, value):
         print("Combox project changed to: " + value)
-        # find the corresponding project in the database and create a temporary database containing the data of the selected project
-        # datacursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS projectdatabase AS SELECT * FROM database WHERE project = ?", (value,))
         # uncheck all checkboxes
         self.toplot = self.ui.comboBox_value.currentText()
         for checkbox in self.checkboxes:
@@ -226,20 +209,21 @@ class MainWindow(QMainWindow):
         stepsdata = []
         check = False
 
-        # get data from database corresponding to the selected project
+        # find all values for design in the database where the project is the selected project
         datacursor.execute("SELECT design FROM database WHERE project = ?", (value,))
         designdata = datacursor.fetchall()
         # remove duplicates
         designdata = list(dict.fromkeys(designdata))
-        # sort list
+        # sort list to make navigation easier
         designdata = sorted(designdata, key = lambda x: (len(x), x))
-        # create checkboxes
+        # create a checkbox for each design
+        # first look at all the checkboxes that are already there and remove the ones that are not needed anymore
         for box in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):           
             if box.text() not in designdata:
                 self.checkboxes.remove(box)
                 box.deleteLater()
+        # then create the checkboxes that are still missing
         for i in range(len(designdata)):
-            #print(designdata[i])
             for box in self.ui.scrollAreaWidgetContents_design.findChildren(QCheckBox):
                 if box.text() == designdata[i]:
                     check = True
@@ -248,6 +232,7 @@ class MainWindow(QMainWindow):
             else:
                 check = False
 
+        # Same procedure for the other parameters - sample, material, print, orientation, A, B, F, G, direction, speed, cycles, steps
         datacursor.execute("SELECT sample FROM database WHERE project = ?", (value,))
         sampledata = datacursor.fetchall()
         sampledata = list(dict.fromkeys(sampledata))
@@ -472,25 +457,27 @@ class MainWindow(QMainWindow):
                 self.addCheckbox(str(stepsdata[i]), self.ui.scrollAreaWidgetContents_steps)
             else:
                 check = False
-            
+        # update the detail window to be empty again.    
         self.set_detailWindow()
-        #datacursor.execute(sqlstatement)
         
         
 
 
-
+    # this function reacts to the second combox being changed. It contains the different ways the data can be plotted
     def on_cbvalue_changed(self, value):
-
+        # global value is saved to be used in other functions
         self.toplot = value
-        print(self.toplot)
+        # check which data was selected to be plotted
         self.checktheboxes()
+        # if any data is selected, use it to plot. Otherwise, plot all possible data
         if self.checkthedata():
             datacursor.execute(self.checkthedata())
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
         tempdata = datacursor.fetchall()
+        # update detail window to contain all selected datasets
         self.set_detailWindow(tempdata)
+        # this functions gets all the raw data from the database and then triggers the plotting function
         self.splitData(tempdata)
 
 
@@ -602,7 +589,7 @@ class MainWindow(QMainWindow):
         return sqlcommand
 
 
-    # Function to check all checkboxes in every scroll area to know which daat to filter
+    # Function to check all checkboxes in every scroll area to know which data was selected
     def checktheboxes(self):
         # first the filters are reset
         self.checkboxes_design = []
@@ -667,29 +654,24 @@ class MainWindow(QMainWindow):
         # iterate all checkboxes in all scroll areas and add those that are checked to a list
         self.checktheboxes()
         # A note to which box was changed, for debugging purposes
-        value = self.sender().text()
-        print("Checkbox " + value + " was changed.")
-        # checkthedata() returns the sql command to be executed or, if no checkboxes are checked, False 
+        #value = self.sender().text()
+        #print("Checkbox " + value + " was changed.")
+        # checkthedata() returns the sql command to be executed or, if no checkboxes are checked, False is returned
         if self.checkthedata():
             datacursor.execute(self.checkthedata())
         # if no checkbox is checked, all the data from current project is selected
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (current_project, ))
-        # print statement for debugging purposes
-        #for i in datacursor:
-        #    print(i)
         # get the data from the database into a temporary variable
         tempdata = datacursor.fetchall()
+        # update the detail window with the selected data
         self.set_detailWindow(tempdata)
-        # turn tempdata into a list (it is a tuple of tuples when using the fetchall method)
         # get the data from the database and make it usable for the graph
         self.splitData(tempdata)
-        #print (self.otherdata)
-        #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
-        #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit, self.x, self.y, self.coding)
 
 
-    # Function to parse data
+    # Function to parse data from a .csv file and add it to the database
+    # The file has to follow specific guidelines to be parsed correctly. The bend.py script is used to create the .csv file. (March 2023)
     def onclick_upload(self):
         def parsetestdata(str):
             indicator = str.rfind("=")
@@ -699,7 +681,6 @@ class MainWindow(QMainWindow):
         bcheck = False
         gcheck = False
         fcheck = False
-        check = False
         projectdata = []
         designdata = []
         sampledata = []
@@ -798,7 +779,7 @@ class MainWindow(QMainWindow):
             datacursor_tuple.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps from database")
             for x in datacursor_tuple:
                 print(x)       
-
+        # clear the rawdata list after adding it to the database
         self.rawdata.clear()
 
     def set_detailWindow(self, timestamps = []):
@@ -857,14 +838,14 @@ class MainWindow(QMainWindow):
             self.R1.append("Next")
             self.R2.append("Next")
             self.timecount.append("Next")
-                
 
-        # draw from data
+        # this calls the function to plot the data
         self.plotupdate()
         
     def plotupdate(self):
-        self.graphWidget.clear()
-        self.graphWidget2.clear()
+        # everything using the self.graphwidgets is commented out because it is not used anymore. self.canvas is used instead.
+        #self.graphWidget.clear()
+        #self.graphWidget2.clear()
         keyword = "Next"
         if self.toplot == "Resistance / Time":
             self.xtext = "Time"
@@ -1369,7 +1350,7 @@ class MainWindow(QMainWindow):
                     dupcheck = False
                     continue           
 
-
+# this class uses pyqtgraph to plot the data, it is not used anymore, but it is kept here for reference
 class ScatterPlot(pg.PlotWidget):
     def __init__(self, xtext, xunit, ytext, yunit, **kargs):
         super().__init__(**kargs)
@@ -1390,7 +1371,7 @@ class ScatterPlot(pg.PlotWidget):
         self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=5, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
         self.addItem(pg.PlotCurveItem(x, y, pen=pg.mkPen(color=color, width=2)))
 
-
+# this class is used to plot the data using matplotlib.
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -1400,10 +1381,18 @@ class MplCanvas(FigureCanvas):
 
     def plot_box(self, all_data, ax, vert=True, color=False, labels=["x1"]):
         ax.cla() #clear self
+        defaultlabels = []
+        for i in range(len(all_data)):
+            defaultlabels.append(str(i+1))
         ax.boxplot(all_data,
                          vert=vert,  # vertical box alignment
                          patch_artist=color,  # fill with color
-                         labels=labels)  # will be used to label x-ticks
+                         labels=defaultlabels)  # will be used to label x-ticks
+        #combine both lists to say which label is which
+        legendlabels = []
+        for i in range(len(defaultlabels)):
+            legendlabels.append(defaultlabels[i] + ": " + labels[i])      
+        ax.legend(legendlabels, loc=1, fontsize=7)
         # Trigger the canvas to update and redraw.
         self.draw()
     
@@ -1479,7 +1468,6 @@ class DetailWindow(QMainWindow):
             #if i is not checked
             else:
                 self.unchecked_cb.append(i.text())
-        print (self.checked_cb)
 
     def on_checkbox_changed(self):
         self.checktheboxes()
@@ -1492,7 +1480,7 @@ class DetailWindow(QMainWindow):
         print("test")
     
 
-
+# This function is called when the user starts the program. It creates the main window and starts the program
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = MainWindow()
