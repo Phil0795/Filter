@@ -13,6 +13,7 @@ import pyqtgraph as pg
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy import signal, ndimage
+from operator import itemgetter
 
 import matplotlib
 matplotlib.use('QtAgg')
@@ -1242,9 +1243,23 @@ class MainWindow(QMainWindow):
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
-            self.canvas.plot_box(all_data1, self.canvas.axes, True, True, labels)
+            # the following steps order the data so the big numbers are displayed at the right side of the graph.
+            # create a tuple containing all_data1 and the labels
+            tuple_data1 = zip(all_data1, labels)
+            tuple_data2 = zip(all_data2, labels)
+            # sort the tuple by the first element, descending
+            tuple_data1 = sorted(tuple_data1, key=lambda x: x[0], reverse=True)
+            tuple_data2 = sorted(tuple_data2, key=lambda x: x[0], reverse=True)
+            # unzip the tuple into two lists
+            labels_1 = []
+            labels_2 = []
+            all_data1, labels_1 = zip(*tuple_data1)
+            all_data2, labels_2 = zip(*tuple_data2)
+
+
+            self.canvas.plot_box(all_data1, self.canvas.axes, True, True, labels_1)
             self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
-            self.canvas2.plot_box(all_data2, self.canvas2.axes, True, True, labels)
+            self.canvas2.plot_box(all_data2, self.canvas2.axes, True, True, labels_2)
             self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
 
 
@@ -1283,7 +1298,8 @@ class MainWindow(QMainWindow):
         return string
 
 
-    # this function is bad practice, but could be used to quicken the calculations
+    # this function is bad practice*, but could be used to quicken the calculations
+    # *bad practice because creating new tables with variable names is not good practice
     # However, calculation times are so short that it is not needed.
     def save_table(self, timestamp, timecount, stepcount, R1, R2):
         # create a new table with the data from the selected timestamp
