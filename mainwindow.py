@@ -825,6 +825,7 @@ class MainWindow(QMainWindow):
                 self.rawdata.pop()   
                 #print(self.rawdata)
                 # split the data into four lists  
+                # normalise resistances to the first value
                 for raw in range(len(self.rawdata)):
                     self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
                     tc.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
@@ -1280,16 +1281,25 @@ class MainWindow(QMainWindow):
             
 
             for t in range(len(self.timestamp)):
+                origindata = []
+                R1_origin = 1
+                R2_origin = 1
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 max_step = datacursor.fetchall()[0]
                 label = self.findbytimestamp(self.timestamp[t])
+                datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(self.timestamp[t]),))
+                for x in datacursor:
+                    origindata = x.split('\n')  
+                    origindata.pop()   
+                    R1_origin=int(origindata[0].split(',')[2])
+                    R2_origin=int(origindata[0].split(',')[3])
                 self.color = self.colors[counter % 6]
                 halfcyclebreaks = [0]
                 cyclebreaks = [0]
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
-                temp_R1 = self.R1[:self.R1.index(keyword)]
-                temp_R2 = self.R2[:self.R2.index(keyword)]
+                temp_R1 = [x/100*R1_origin+R1_origin for x in self.R1[:self.R1.index(keyword)]]
+                temp_R2 = [x/100*R2_origin+R2_origin for x in self.R2[:self.R2.index(keyword)]]
                 for i in range(len(temp_stepcount)):
                     if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
                         halfcyclebreaks.append(i)
