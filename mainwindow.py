@@ -529,28 +529,28 @@ class MainWindow(QMainWindow):
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
             for value in self.checkboxes_A:
-                sqlcommand = sqlcommand + "A = " + "'" + str(value) + "'" + " OR "
+                sqlcommand = sqlcommand + "apara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
         if self.checkboxes_B:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
             for value in self.checkboxes_B:
-                sqlcommand = sqlcommand + "B = " + "'" + str(value) + "'" + " OR "
+                sqlcommand = sqlcommand + "bpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
         if self.checkboxes_F:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
             for value in self.checkboxes_F:
-                sqlcommand = sqlcommand + "F = " + "'" + str(value) + "'" + " OR "
+                sqlcommand = sqlcommand + "fpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
         if self.checkboxes_G:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
             for value in self.checkboxes_G:
-                sqlcommand = sqlcommand + "G = " + "'" + str(value) + "'" + " OR "
+                sqlcommand = sqlcommand + "gpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
             notthefirst = True
         if self.checkboxes_direction:
@@ -1266,9 +1266,9 @@ class MainWindow(QMainWindow):
 
         elif self.toplot == "2":
             self.xtext = "Step"
-            self.ytext = "Change in Resistance"
+            self.ytext = "Resistance"
             self.xunit = ""
-            self.yunit = "(%)"
+            self.yunit = "(Ohm)"
             #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
@@ -1366,7 +1366,7 @@ class MainWindow(QMainWindow):
                     #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
                     self.canvas.plot_line(stepcount_detail, (1/(pu_r1/pu_r2+1)), self.color, label)
                     self.canvas.plot_line(stepcount_detail, (1/(pd_r1/pd_r2+1)), self.color, None)
-                    self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+                    self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, "1/(r1/r2+1)")
                     self.canvas2.plot_line(stepcount_detail, pu_r1, self.color, label)
                     self.canvas2.plot_line(stepcount_detail, pd_r1, self.color, None)
                     self.canvas2.plot_line(stepcount_detail, pu_r2, self.color, label)
