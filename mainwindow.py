@@ -1241,8 +1241,9 @@ class MainWindow(QMainWindow):
                     div2 = np.abs(max(pu_r2)-min(pu_r2))
                     #error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     #error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    alldata1_cycle.append(div1)
-                    alldata2_cycle.append(div2)
+                    for xvar in range(1, max_step, 10):
+                        alldata1_cycle.append(np.abs(pu_r1[xvar] - pd_r1[xvar]))
+                        alldata2_cycle.append(np.abs(pu_r2[xvar] - pd_r2[xvar]))
 
                     # delete the list up to the next keyword
                 all_data1.append(alldata1_cycle)
