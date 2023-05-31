@@ -31,7 +31,7 @@ from ui_form import Ui_MainWindow
 from ui_detailwindow import Ui_DetWindow
 
 #Create a database in RAM
-connection_data = sqlite3.connect('testproject.db')
+connection_data = sqlite3.connect('InitialDB.db')
 connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
 datacursor = connection_data.cursor()
@@ -1020,9 +1020,15 @@ class MainWindow(QMainWindow):
                     #self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
                     self.canvas.plot_line(stepcount_detail, pu_r1, self.color, label)
+                    counter += 1
+                    self.color = self.colors[counter % 6]
                     self.canvas.plot_line(stepcount_detail, pd_r1, self.color, None)
+                    counter -= 1
+                    self.color = self.colors[counter % 6]
                     self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
                     self.canvas2.plot_line(stepcount_detail, pu_r2, self.color, label)
+                    counter += 1
+                    self.color = self.colors[counter % 6]
                     self.canvas2.plot_line(stepcount_detail, pd_r2, self.color, None)
                     self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
                     #self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
@@ -1233,10 +1239,10 @@ class MainWindow(QMainWindow):
                     pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
                     div1 = np.abs(max(pu_r1)-min(pu_r1))
                     div2 = np.abs(max(pu_r2)-min(pu_r2))
-                    error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
-                    error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
-                    alldata1_cycle.append(error1)
-                    alldata2_cycle.append(error2)
+                    #error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
+                    #error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
+                    alldata1_cycle.append(div1)
+                    alldata2_cycle.append(div2)
 
                     # delete the list up to the next keyword
                 all_data1.append(alldata1_cycle)
