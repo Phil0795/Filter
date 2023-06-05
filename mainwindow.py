@@ -1491,7 +1491,7 @@ class MainWindow(QMainWindow):
                         self.data.append("Test")
                         self.data.append(lines[1].split(','))
                         # Line 2 is the header for the raw data, so we skip it and add the rest of the lines to the list
-                        self.rawdata.append("".join(lines[20:])) 
+                        self.rawdata.append("".join(lines[7:])) 
                     print("Data added")  
                     # Now we add the parsed data into the database according to the parameters in the file
                     self.onclick_upload()
