@@ -483,6 +483,12 @@ class MainWindow(QMainWindow):
         self.splitData(tempdata)
 
 
+    # this function deleted a set of data according to the given timestamp from the database when the user clicks the delete button
+    def deleteData(self, timestamp):
+        datacursor.execute(Q_delete, (timestamp,))
+        connection_data.commit()
+        self.readfromdatabase()
+        self.on_cbproject_changed(self.ui.comboBox_project.currentText())
 
     # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
     def checkthedata(self):
@@ -1395,10 +1401,10 @@ class MainWindow(QMainWindow):
                 counter += 1
 
         elif self.toplot == "3":
-            self.xtext = "Step"
-            self.ytext = "Resistance"
+            self.xtext = "Timestamp"
+            self.ytext = "Gradient of Peaks"
             self.xunit = ""
-            self.yunit = "(Ohm)"
+            self.yunit = ""
             #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
@@ -1447,11 +1453,17 @@ class MainWindow(QMainWindow):
                     temp2_R1.append(temp_R1[hcb])
                     temp2_R2.append(temp_R2[hcb])
                     cyclecounter += 1
+                # interpolate a straight line between the points
+                predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
+                predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
+                # calculate the gradient of the line
+                gradientR1 = np.mean(np.gradient(predictR1(temp2_stepcount)))
+                gradientR2 = np.mean(np.gradient(predictR2(temp2_stepcount)))
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(temp2_stepcount, temp2_R1, self.color, 5, label)
+                self.canvas.plot_dot(counter+1, gradientR1, self.color, 5, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(temp2_stepcount, temp2_R2, self.color, 5, label)
+                self.canvas2.plot_dot(counter+1, gradientR2, self.color, 5, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
@@ -1460,10 +1472,10 @@ class MainWindow(QMainWindow):
                 counter += 1
 
         elif self.toplot == "4":
-            self.xtext = "Step"
-            self.ytext = "Resistance"
+            self.xtext = "Timestamp"
+            self.ytext = "Gradient of Valleys"
             self.xunit = ""
-            self.yunit = "(Ohm)"
+            self.yunit = ""
             #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
@@ -1512,11 +1524,16 @@ class MainWindow(QMainWindow):
                     temp2_R1.append(temp_R1[cb])
                     temp2_R2.append(temp_R2[cb])
                     cyclecounter += 1
+                predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
+                predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
+                # calculate the gradient of the line
+                gradientR1 = np.mean(np.gradient(predictR1(temp2_stepcount)))
+                gradientR2 = np.mean(np.gradient(predictR2(temp2_stepcount)))
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(temp2_stepcount, temp2_R1, self.color, 5, label)
+                self.canvas.plot_dot(counter+1, gradientR1, self.color, 5, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(temp2_stepcount, temp2_R2, self.color, 5, label)
+                self.canvas2.plot_dot(counter+1, gradientR2, self.color, 5, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
