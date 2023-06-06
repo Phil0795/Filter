@@ -66,6 +66,7 @@ Q_k_fac_mean = "UPDATE database SET k_fac_mean = ? WHERE timestamp = ?"
 Q_k_fac_devi = "UPDATE database SET k_fac_devi = ? WHERE timestamp = ?"
 Q_Hyst_mean = "UPDATE database SET Hyst_mean = ? WHERE timestamp = ?"
 Q_Hyst_devi = "UPDATE database SET Hyst_devi = ? WHERE timestamp = ?"
+Q_delete = "DELETE FROM database WHERE timestamp = ?"
 
 
 
@@ -1387,6 +1388,136 @@ class MainWindow(QMainWindow):
                 temp_stepcount = temp_stepcount[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R1 = temp_R1[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
                 temp_R2 = temp_R2[cyclebreaks[self.ui.spinBox_cycle.value()-1]:cyclebreaks[self.ui.spinBox_cycleEnd.value()]]
+                # delete the list up to the next keyword
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
+
+        elif self.toplot == "3":
+            self.xtext = "Step"
+            self.ytext = "Resistance"
+            self.xunit = ""
+            self.yunit = "(Ohm)"
+            #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            halfcyclebreaks = [0]
+            self.canvas.clear()
+            self.canvas2.clear()
+            
+            
+
+            for t in range(len(self.timestamp)):
+                origindata = []
+                R1_origin = 1
+                R2_origin = 1
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                label = self.findbytimestamp(self.timestamp[t])
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                halfcyclebreaks = [0]
+                cyclebreaks = [0]
+                max_step = datacursor.fetchall()[0]
+                self.color = self.colors[counter % 6]
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp2_stepcount = []
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp2_R1 = []
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                temp2_R2 = []
+                for i in range(len(temp_stepcount)):
+                    if max_step-temp_stepcount[i] <=15:
+                        maxstepreached = True
+                        halfcyclebreaks.append(i)
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+
+                # create a list from temp_stepcount from cyclebreak to cyclebreak
+                cyclecounter = 0
+                for hcb in halfcyclebreaks:
+                    temp2_stepcount.append(cyclecounter)
+                    temp2_R1.append(temp_R1[hcb])
+                    temp2_R2.append(temp_R2[hcb])
+                    cyclecounter += 1
+                #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.canvas.plot_dot(temp2_stepcount, temp2_R1, self.color, 5, label)
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_dot(temp2_stepcount, temp2_R2, self.color, 5, label)
+                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                # delete the list up to the next keyword
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+                counter += 1
+
+        elif self.toplot == "4":
+            self.xtext = "Step"
+            self.ytext = "Resistance"
+            self.xunit = ""
+            self.yunit = "(Ohm)"
+            #self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            #self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
+            counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            halfcyclebreaks = [0]
+            self.canvas.clear()
+            self.canvas2.clear()
+            
+            
+
+            for t in range(len(self.timestamp)):
+                origindata = []
+                R1_origin = 1
+                R2_origin = 1
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                label = self.findbytimestamp(self.timestamp[t])
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                halfcyclebreaks = [0]
+                cyclebreaks = [0]
+                max_step = datacursor.fetchall()[0]
+                self.color = self.colors[counter % 6]
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp2_stepcount = []
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp2_R1 = []
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                temp2_R2 = []
+                for i in range(len(temp_stepcount)):
+                    if max_step-temp_stepcount[i] <=15:
+                        maxstepreached = True
+                        halfcyclebreaks.append(i)
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        maxstepreached = False
+
+                # create a list from temp_stepcount from cyclebreak to cyclebreak
+                cyclecounter = 0
+                for cb in cyclebreaks:
+                    temp2_stepcount.append(cyclecounter)
+                    temp2_R1.append(temp_R1[cb])
+                    temp2_R2.append(temp_R2[cb])
+                    cyclecounter += 1
+                #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
+                #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
+                self.canvas.plot_dot(temp2_stepcount, temp2_R1, self.color, 5, label)
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_dot(temp2_stepcount, temp2_R2, self.color, 5, label)
+                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
