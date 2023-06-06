@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
         self.R1 = []
         self.R2 = []
         # -""- setting the color of the graphs
-        self.colors = ["r", "g", "b", "y", "m", "c"]
+        self.colors = ["lightcoral", "brown", "maroon", "red", "coral", "sienna", "sandybrown", "darkorange", "goldenrod", "gold", "olive", "yellow", "greenyellow", "plategreen", "darkgreen", "lime", "turquoise", "teal", "cyan", "deepskyblue", "dodgerblue", "blue", "navy", "blueviolet", "fuchsia", "hotpink"]
         self.color = self.colors[0]
         # -""- parsing
         self.checkboxes_design = []
@@ -1462,48 +1462,49 @@ class MainWindow(QMainWindow):
         # Get the directory from the user
         directory = QFileDialog.getExistingDirectory(None, "Select Directory")
         # Get the files from the directory
-        files = os.listdir(directory)
+        #files = os.listdir(directory)
+        for root, dirs, files in os.walk(directory):
         # Create a list to store the data
         # Loop through the files
-        for i in files:
-            # Check if the file is a .csv file
-            if i.endswith(".csv"):
-                for duplicate in self.data:
-                    if i[:-4] in duplicate:
-                        dupcheck = True
-                # Check for duplicate files. Altough this is not needed, because the database uses unique timestamps to make dups impossible,
-                # this is a good check to save on computing time
-                if dupcheck == False:
-                    # Save the file name without .csv to the list, it is the unique timestamp of this test
-                    self.data.append("Timestamp")
-                    self.data.append(i[:-4])
-                    # Parse the contents of the file line by line and save to a list
-                    with open(directory + "/" + i, "r") as f:
-                        # Read the lines and save them in a list
-                        lines = f.readlines()
-                        # first line contains the sample parameters and the second line contains the test parameters
-                        # Remove the newline character from the end of these lines fisrt
-                        lines[0] = lines[0][:-1]
-                        lines[1] = lines[1][:-1]
-                        # Now we split the lines into a list of parameters
-                        self.data.append("Sample")
-                        self.data.append(lines[0].split('_'))
-                        self.data.append("Test")
-                        self.data.append(lines[1].split(','))
-                        # Line 2 is the header for the raw data, so we skip it and add the rest of the lines to the list
-                        self.rawdata.append("".join(lines[7:])) 
-                    print("Data added")  
-                    # Now we add the parsed data into the database according to the parameters in the file
-                    self.onclick_upload()
-                    # Remove the keywords used in the onclick_upload function so we do not try to upload the same data again
-                    self.data.remove("Timestamp")
-                    self.data.remove("Sample")
-                    self.data.remove("Test")
-                else:
-                    # If the file is a duplicate, skip it
-                    print("Duplicate file found: "+i)
-                    dupcheck = False
-                    continue           
+            for i in files:
+                # Check if the file is a .csv file
+                if i.endswith(".csv"):
+                    for duplicate in self.data:
+                        if i[:-4] in duplicate:
+                            dupcheck = True
+                    # Check for duplicate files. Altough this is not needed, because the database uses unique timestamps to make dups impossible,
+                    # this is a good check to save on computing time
+                    if dupcheck == False:
+                        # Save the file name without .csv to the list, it is the unique timestamp of this test
+                        self.data.append("Timestamp")
+                        self.data.append(i[:-4])
+                        # Parse the contents of the file line by line and save to a list
+                        with open(os.path.join(root,i), "r") as f:
+                            # Read the lines and save them in a list
+                            lines = f.readlines()
+                            # first line contains the sample parameters and the second line contains the test parameters
+                            # Remove the newline character from the end of these lines fisrt
+                            lines[0] = lines[0][:-1]
+                            lines[1] = lines[1][:-1]
+                            # Now we split the lines into a list of parameters
+                            self.data.append("Sample")
+                            self.data.append(lines[0].split('_'))
+                            self.data.append("Test")
+                            self.data.append(lines[1].split(','))
+                            # Line 2 is the header for the raw data, so we skip it and add the rest of the lines to the list
+                            self.rawdata.append("".join(lines[7:])) 
+                        print("Data added")  
+                        # Now we add the parsed data into the database according to the parameters in the file
+                        self.onclick_upload()
+                        # Remove the keywords used in the onclick_upload function so we do not try to upload the same data again
+                        self.data.remove("Timestamp")
+                        self.data.remove("Sample")
+                        self.data.remove("Test")
+                    else:
+                        # If the file is a duplicate, skip it
+                        print("Duplicate file found: "+i)
+                        dupcheck = False
+                        continue           
 
 # this class uses pyqtgraph to plot the data, it is not used anymore, but it is kept here for reference
 class ScatterPlot(pg.PlotWidget):
