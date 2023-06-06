@@ -13,7 +13,7 @@ import pyqtgraph as pg
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy import signal, ndimage
-from operator import itemgetter
+#from operator import itemgetter
 
 import matplotlib
 matplotlib.use('QtAgg')
@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
         self.R1 = []
         self.R2 = []
         # -""- setting the color of the graphs
-        self.colors = ["lightcoral", "brown", "maroon", "red", "coral", "sienna", "sandybrown", "darkorange", "goldenrod", "gold", "olive", "yellow", "greenyellow", "plategreen", "darkgreen", "lime", "turquoise", "teal", "cyan", "deepskyblue", "dodgerblue", "blue", "navy", "blueviolet", "fuchsia", "hotpink"]
+        self.colors = ["b", "g", "r", "c", "m", "y", "k"]
         self.color = self.colors[0]
         # -""- parsing
         self.checkboxes_design = []
