@@ -1249,8 +1249,8 @@ class MainWindow(QMainWindow):
                     #error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
                     #error2 = np.mean(np.abs(pu_r2 - pd_r2)/div2)
                     for xvar in range(1, max_step, 10):
-                        alldata1_cycle.append(np.abs(pu_r1[xvar] - pd_r1[xvar]))
-                        alldata2_cycle.append(np.abs(pu_r2[xvar] - pd_r2[xvar]))
+                        alldata1_cycle.append(np.abs(pu_r1[xvar] - pd_r1[xvar])/div1*100)
+                        alldata2_cycle.append(np.abs(pu_r2[xvar] - pd_r2[xvar])/div2*100)
 
                     # delete the list up to the next keyword
                 all_data1.append(alldata1_cycle)
@@ -1457,8 +1457,13 @@ class MainWindow(QMainWindow):
                 predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
                 predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
                 # calculate the gradient of the line
-                gradientR1 = np.mean(np.gradient(predictR1(temp2_stepcount)))
-                gradientR2 = np.mean(np.gradient(predictR2(temp2_stepcount)))
+                list1 = []
+                list2 = []
+                for cycle in range(len(temp2_stepcount)-1):
+                    list1.append(np.gradient(predictR1(cycle)))
+                    list2.append(np.gradient(predictR2(temp2_stepcount)))
+                gradientR1 = np.mean(list1)
+                gradientR2 = np.mean(list2)
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
                 self.canvas.plot_dot(counter+1, gradientR1, self.color, 5, label)
@@ -1526,14 +1531,15 @@ class MainWindow(QMainWindow):
                     cyclecounter += 1
                 predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
                 predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
+                stepcount_detail = list(range(0, cyclecounter))
                 # calculate the gradient of the line
                 gradientR1 = np.mean(np.gradient(predictR1(temp2_stepcount)))
                 gradientR2 = np.mean(np.gradient(predictR2(temp2_stepcount)))
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(counter+1, gradientR1, self.color, 5, label)
+                self.canvas.plot_line(stepcount_detail, predictR1(stepcount_detail), self.color, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(counter+1, gradientR2, self.color, 5, label)
+                self.canvas2.plot_line(stepcount_detail, predictR2(stepcount_detail), self.color, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]

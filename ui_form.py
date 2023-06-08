@@ -137,6 +137,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.pushButton_detail)
 
+        self.pushButton_update = QPushButton(self.centralwidget)
+        self.pushButton_update.setObjectName(u"pushButton_update")
+
+        self.horizontalLayout.addWidget(self.pushButton_update)
+
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
@@ -413,6 +418,7 @@ class Ui_MainWindow(object):
         self.label_oncycle.setText(QCoreApplication.translate("MainWindow", u"on cycle", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"to", None))
         self.pushButton_detail.setText(QCoreApplication.translate("MainWindow", u"Details", None))
+        self.pushButton_update.setText(QCoreApplication.translate("MainWindow", u"Update", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Speed", None))
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"F-Parameter", None))
         self.label_10.setText(QCoreApplication.translate("MainWindow", u"Material", None))

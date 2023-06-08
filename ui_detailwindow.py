@@ -37,12 +37,13 @@ class Ui_DetWindow(object):
         self.label.setObjectName(u"label")
 
         self.verticalLayout.addWidget(self.label)
+
         self.scrollArea = QScrollArea(self.centralwidget)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 388, 527))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 388, 497))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.verticalLayout.addWidget(self.scrollArea)
@@ -51,6 +52,11 @@ class Ui_DetWindow(object):
         self.pushButton_update.setObjectName(u"pushButton_update")
 
         self.verticalLayout.addWidget(self.pushButton_update)
+
+        self.pushButton_delete = QPushButton(self.centralwidget)
+        self.pushButton_delete.setObjectName(u"pushButton_delete")
+
+        self.verticalLayout.addWidget(self.pushButton_delete)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -70,5 +76,6 @@ class Ui_DetWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Uncheck those Datasets you do not want to display in the main window.", None))
         self.pushButton_update.setText(QCoreApplication.translate("MainWindow", u"Update Plots", None))
+        self.pushButton_delete.setText(QCoreApplication.translate("MainWindow", u"Delete all selected", None))
     # retranslateUi
 

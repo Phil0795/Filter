@@ -39,7 +39,7 @@
          <x>0</x>
          <y>0</y>
          <width>388</width>
-         <height>527</height>
+         <height>497</height>
         </rect>
        </property>
       </widget>
@@ -49,6 +49,13 @@
      <widget class="QPushButton" name="pushButton_update">
       <property name="text">
        <string>Update Plots</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_delete">
+      <property name="text">
+       <string>Delete all selected</string>
       </property>
      </widget>
     </item>
