@@ -96,6 +96,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_sample = []
         self.checkboxes_material = []
         self.checkboxes_print = []
+        self.tempdata = []
         self.checkboxes_orientation = []
         self.checkboxes_A = []
         self.checkboxes_B = []
@@ -125,6 +126,7 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_upload.clicked.connect(self.selectDirectory)
         self.ui.pushButton.clicked.connect(self.readfromdatabase)
         self.ui.pushButton_detail.clicked.connect(self.onclick_detail)
+        self.ui.pushButton_update.clicked.connect(self.update_all)
         # These are the graphs that are shown in the main window. The ScatterPlot class uses pyqtgraph to create the graphs. This is a quick and dirty solution and legacy code.
         self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -476,11 +478,11 @@ class MainWindow(QMainWindow):
             datacursor.execute(self.checkthedata())
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
-        tempdata = datacursor.fetchall()
+        self.tempdata = datacursor.fetchall()
         # update detail window to contain all selected datasets
-        self.set_detailWindow(tempdata)
+        self.set_detailWindow(self.tempdata)
         # this functions gets all the raw data from the database and then triggers the plotting function
-        self.splitData(tempdata)
+        #self.splitData(self.tempdata)
 
 
     # this function deleted a set of data according to the given timestamp from the database when the user clicks the delete button
@@ -671,11 +673,11 @@ class MainWindow(QMainWindow):
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (current_project, ))
         # get the data from the database into a temporary variable
-        tempdata = datacursor.fetchall()
+        self.tempdata = datacursor.fetchall()
         # update the detail window with the selected data
-        self.set_detailWindow(tempdata)
+        self.set_detailWindow(self.tempdata)
         # get the data from the database and make it usable for the graph
-        self.splitData(tempdata)
+        #self.splitData(self.tempdata)
 
 
     # Function to parse data from a .csv file and add it to the database
@@ -797,6 +799,10 @@ class MainWindow(QMainWindow):
         self.detailwindow.renew_checkboxes(timestampslong)
 
 
+
+    def update_all(self):
+        self.splitData(self.tempdata)
+
     # Function to split the data bulk into different list. This is used when raw data shall be displayed.
     def splitData(self, timestamps = []):
         self.timecount.clear()
@@ -821,10 +827,10 @@ class MainWindow(QMainWindow):
             self.rawdata.clear()
             datacursor.execute("SELECT alldata FROM database WHERE timestamp = ?", (str(timestamps[t]),))
             self.timestamp.append(timestamps[t])  #.replace(".", ""))
-            tc = []
-            sc = []
-            r1 = []
-            r2 = []
+            #tc = []
+            #sc = []
+            #r1 = []
+            #r2 = []
             #print (timestamps[i])
             for x in datacursor:
                 # split data at \n
@@ -835,13 +841,13 @@ class MainWindow(QMainWindow):
                 # normalise resistances to the first value
                 for raw in range(len(self.rawdata)):
                     self.timecount.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
-                    tc.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
+                    #tc.append(int(self.rawdata[raw].split(',')[0])-int(self.rawdata[0].split(',')[0]))
                     self.stepcount.append(int(self.rawdata[raw].split(',')[1]))
-                    sc.append(int(self.rawdata[raw].split(',')[1]))
+                    #sc.append(int(self.rawdata[raw].split(',')[1]))
                     self.R1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
-                    r1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
+                    #r1.append(100*(int(self.rawdata[raw].split(',')[2])-int(self.rawdata[0].split(',')[2]))/int(self.rawdata[0].split(',')[2]))
                     self.R2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
-                    r2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
+                    #r2.append(100*(int(self.rawdata[raw].split(',')[3])-int(self.rawdata[0].split(',')[3]))/int(self.rawdata[0].split(',')[3]))
                 #self.save_table(timestamps[t], tc, sc, r1, r2)
             self.stepcount.append("Next")
             self.R1.append("Next")
@@ -1420,12 +1426,10 @@ class MainWindow(QMainWindow):
                 origindata = []
                 R1_origin = 1
                 R2_origin = 1
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
                 label = self.findbytimestamp(self.timestamp[t])
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
+                halfcyclebreaks = []
+                cyclebreaks = []
                 max_step = datacursor.fetchall()[0]
                 self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
@@ -1435,6 +1439,7 @@ class MainWindow(QMainWindow):
                 temp2_R1 = []
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 temp2_R2 = []
+                
                 for i in range(len(temp_stepcount)):
                     if max_step-temp_stepcount[i] <=15:
                         maxstepreached = True
@@ -1445,30 +1450,31 @@ class MainWindow(QMainWindow):
                     elif maxstepreached == True and i == len(temp_stepcount)-1:
                         cyclebreaks.append(i)
                         maxstepreached = False
-
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
                 cyclecounter = 0
-                for hcb in halfcyclebreaks:
+                for hcb in range((self.ui.spinBox_cycleEnd.value()-(self.ui.spinBox_cycle.value()-1))):
                     temp2_stepcount.append(cyclecounter)
-                    temp2_R1.append(temp_R1[hcb])
-                    temp2_R2.append(temp_R2[hcb])
+                    temp2_R1.append(temp_R1[halfcyclebreaks[hcb]])
+                    temp2_R2.append(temp_R2[halfcyclebreaks[hcb]])
                     cyclecounter += 1
                 # interpolate a straight line between the points
-                predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
-                predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
+                #predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
+                #predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
                 # calculate the gradient of the line
-                list1 = []
-                list2 = []
-                for cycle in range(len(temp2_stepcount)-1):
-                    list1.append(np.gradient(predictR1(cycle)))
-                    list2.append(np.gradient(predictR2(temp2_stepcount)))
-                gradientR1 = np.mean(list1)
-                gradientR2 = np.mean(list2)
+                gradientR1 = (temp2_R1[-1]-temp2_R1[0])/cyclecounter/temp2_R1[0]*100
+                gradientR2 = (temp2_R2[-1]-temp2_R2[0])/cyclecounter/temp2_R2[0]*100
+                #list1 = []
+                #list2 = []
+                #for cycle in range(len(temp2_stepcount)-1):
+                    #list1.append(np.gradient(predictR1(cycle)))
+                    #list2.append(np.gradient(predictR2(temp2_stepcount)))
+                #gradientR1 = np.mean(list1)
+                #gradientR2 = np.mean(list2)
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(counter+1, gradientR1, self.color, 5, label)
+                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 5, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(counter+1, gradientR2, self.color, 5, label)
+                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 5, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
@@ -1500,8 +1506,8 @@ class MainWindow(QMainWindow):
                 max_step = datacursor.fetchall()[0]
                 label = self.findbytimestamp(self.timestamp[t])
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                halfcyclebreaks = [0]
-                cyclebreaks = [0]
+                halfcyclebreaks = []
+                cyclebreaks = []
                 max_step = datacursor.fetchall()[0]
                 self.color = self.colors[counter % 6]
                 # get the list up to but not including the next keyword
@@ -1524,22 +1530,19 @@ class MainWindow(QMainWindow):
 
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
                 cyclecounter = 0
-                for cb in cyclebreaks:
+                for cb in range((self.ui.spinBox_cycleEnd.value()-(self.ui.spinBox_cycle.value()-1))):
                     temp2_stepcount.append(cyclecounter)
-                    temp2_R1.append(temp_R1[cb])
-                    temp2_R2.append(temp_R2[cb])
+                    temp2_R1.append(temp_R1[cyclebreaks[cb]])
+                    temp2_R2.append(temp_R2[cyclebreaks[cb]])
                     cyclecounter += 1
-                predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
-                predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
-                stepcount_detail = list(range(0, cyclecounter))
                 # calculate the gradient of the line
-                gradientR1 = np.mean(np.gradient(predictR1(temp2_stepcount)))
-                gradientR2 = np.mean(np.gradient(predictR2(temp2_stepcount)))
+                gradientR1 = (temp2_R1[-1]-temp2_R1[0])/cyclecounter
+                gradientR2 = (temp2_R2[-1]-temp2_R2[0])/cyclecounter
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_line(stepcount_detail, predictR1(stepcount_detail), self.color, label)
+                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 5, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_line(stepcount_detail, predictR2(stepcount_detail), self.color, label)
+                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 5, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
@@ -1564,9 +1567,9 @@ class MainWindow(QMainWindow):
             datacursor.execute(self.checkthedata())
         else:
             datacursor.execute("SELECT timestamp FROM database WHERE project = ?", (self.ui.comboBox_project.currentText(),))
-        tempdata = datacursor.fetchall()
-        self.set_detailWindow(tempdata)
-        self.splitData(tempdata)
+        self.tempdata = datacursor.fetchall()
+        self.set_detailWindow(self.tempdata)
+        #self.splitData(self.tempdata)
 
 
 
