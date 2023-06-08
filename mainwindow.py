@@ -31,7 +31,7 @@ from ui_form import Ui_MainWindow
 from ui_detailwindow import Ui_DetWindow
 
 #Create a database in RAM
-connection_data = sqlite3.connect('InitialDB.db')
+connection_data = sqlite3.connect('MasterarbeitDB.db')
 connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
 datacursor = connection_data.cursor()
