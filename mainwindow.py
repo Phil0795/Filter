@@ -1601,10 +1601,14 @@ class MainWindow(QMainWindow):
                 gradient2_sorted += [i[0]]
                 timestamp2_sorted += [i[1]]
             # labeling does not work, colors do not work
-            self.canvas.plot_dot(timestamp1_sorted, gradient1_sorted, self.color, 5, label)
-            self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-            self.canvas2.plot_dot(timestamp2_sorted, gradient2_sorted, self.color, 5, label)
-            self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+            for plots in range(len(gradient1_sorted)):
+                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 5, self.findbytimestamp(timestamp1_sorted[plots]))
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 5, self.findbytimestamp(timestamp2_sorted[plots]))
+                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                counter += 1
+                self.color = self.colors[counter % 6]
+                
 
 
 
