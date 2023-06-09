@@ -1459,17 +1459,30 @@ class MainWindow(QMainWindow):
                         maxstepreached = False
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
                 cyclecounter = 0
-                for hcb in range((self.ui.spinBox_cycleEnd.value()-(self.ui.spinBox_cycle.value()-1))):
+                temp_grad1 = []
+                temp_grad2 = []
+                temp_height1 = []
+                temp_height2 = []
+                for hcb in range((self.ui.spinBox_cycle.value()-1),self.ui.spinBox_cycleEnd.value()):
                     temp2_stepcount.append(cyclecounter)
                     temp2_R1.append(temp_R1[halfcyclebreaks[hcb]])
                     temp2_R2.append(temp_R2[halfcyclebreaks[hcb]])
+                    temp_height1.append(temp_R1[halfcyclebreaks[hcb]]-temp_R1[cyclebreaks[hcb]])
+                    temp_height2.append(temp_R2[halfcyclebreaks[hcb]]-temp_R2[cyclebreaks[hcb]])
                     cyclecounter += 1
                 # interpolate a straight line between the points
                 #predictR1 = interp1d(temp2_stepcount, temp2_R1, kind='linear', bounds_error=False, fill_value=(temp2_R1[0], temp2_R1[-1]))
                 #predictR2 = interp1d(temp2_stepcount, temp2_R2, kind='linear', bounds_error=False, fill_value=(temp2_R2[0], temp2_R2[-1]))
                 # calculate the gradient of the line
-                gradientR1 = (temp2_R1[-1]-temp2_R1[0])/cyclecounter/temp2_R1[0]*100
-                gradientR2 = (temp2_R2[-1]-temp2_R2[0])/cyclecounter/temp2_R2[0]*100
+                for p in range(len(temp2_stepcount)):
+                    if p != 0:
+                        temp_grad1.append((temp2_R1[p]-temp2_R1[p-1])/temp_height1[p]*100)
+                        temp_grad2.append((temp2_R2[p]-temp2_R2[p-1])/temp_height2[p]*100)
+                    if p == 0:
+                        pass
+
+                gradientR1 = np.mean(temp_grad1)                
+                gradientR2 = np.mean(temp_grad2)
                 #list1 = []
                 #list2 = []
                 #for cycle in range(len(temp2_stepcount)-1):
@@ -1502,7 +1515,9 @@ class MainWindow(QMainWindow):
             halfcyclebreaks = [0]
             self.canvas.clear()
             self.canvas2.clear()
-            
+            gradientR1 = []
+            gradientR2 = []
+            listoftimestamps = []
             
 
             for t in range(len(self.timestamp)):
@@ -1536,26 +1551,60 @@ class MainWindow(QMainWindow):
                         maxstepreached = False
 
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
+                temp_height1 = []
+                temp_height2 = []
+                temp_grad1 = []
+                temp_grad2 = []
                 cyclecounter = 0
-                for cb in range((self.ui.spinBox_cycleEnd.value()-(self.ui.spinBox_cycle.value()-1))):
+                for cb in range((self.ui.spinBox_cycle.value()-1),self.ui.spinBox_cycleEnd.value()):
                     temp2_stepcount.append(cyclecounter)
                     temp2_R1.append(temp_R1[cyclebreaks[cb]])
                     temp2_R2.append(temp_R2[cyclebreaks[cb]])
+                    temp_height1.append(temp_R1[halfcyclebreaks[cb]]-temp_R1[cyclebreaks[cb]])
+                    temp_height2.append(temp_R2[halfcyclebreaks[cb]]-temp_R2[cyclebreaks[cb]])
                     cyclecounter += 1
                 # calculate the gradient of the line
-                gradientR1 = (temp2_R1[-1]-temp2_R1[0])/cyclecounter
-                gradientR2 = (temp2_R2[-1]-temp2_R2[0])/cyclecounter
+                for p in range(len(temp2_stepcount)):
+                    if p != 0:
+                        temp_grad1.append((temp2_R1[p]-temp2_R1[p-1])/temp_height1[p]*100)
+                        temp_grad2.append((temp2_R2[p]-temp2_R2[p-1])/temp_height2[p]*100)
+                    if p == 0:
+                        pass
+
+                gradientR1.append(np.mean(temp_grad1))               
+                gradientR2.append(np.mean(temp_grad2))
+                listoftimestamps.append(self.timestamp[t])
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 5, label)
-                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 5, label)
-                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+            
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
-                counter += 1
+
+            # sort the gradients and timestamps
+            unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
+            sorted_list1 = sorted(unsorted_list1)
+            unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
+            sorted_list2 = sorted(unsorted_list2)
+
+            gradient1_sorted = []
+            timestamp1_sorted = []
+            gradient2_sorted = []
+            timestamp2_sorted = []
+
+            for i in sorted_list1:
+                gradient1_sorted += [i[0]]
+                timestamp1_sorted += [i[1]]
+
+            for i in sorted_list2:
+                gradient2_sorted += [i[0]]
+                timestamp2_sorted += [i[1]]
+            # labeling does not work, colors do not work
+            self.canvas.plot_dot(timestamp1_sorted, gradient1_sorted, self.color, 5, label)
+            self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+            self.canvas2.plot_dot(timestamp2_sorted, gradient2_sorted, self.color, 5, label)
+            self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
 
 
 
