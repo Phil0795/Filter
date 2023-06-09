@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
         # This is the detail window. It is created here but not shown yet. It is shown when the user clicks the "Detail" button. It is used to filter the data in detail.
         self.detailwindow = DetailWindow()
         self.detailwindow.ui.pushButton_update.clicked.connect(self.detailwindow_buttonpress)
+        self.detailwindow.ui.pushButton_delete.clicked.connect(self.detailwindow_delete)
 
         # The following code gives a layout to the areas of the main window which are filled with the widgets defined above. (Which could not be created in the QTCreator)
         # QVBoxLayout places all widgets on top of each other. QHBoxLayout places all widgets next to each other.
@@ -158,6 +159,13 @@ class MainWindow(QMainWindow):
     def detailwindow_buttonpress(self):
         timestamps = self.detailwindow.get_timestamps()
         self.splitData(timestamps)
+
+    def detailwindow_delete(self):
+        timestamps = self.detailwindow.get_timestamps()
+        for timestamp in timestamps:
+            self.deleteData(timestamp)
+        self.readfromdatabase()
+        self.on_cbproject_changed(self.ui.comboBox_project.currentText())
         
     def readfromdatabase(self):
         # This function reads the data from the database and makes it available for plotting.
@@ -189,6 +197,7 @@ class MainWindow(QMainWindow):
             self.detailwindow.hide()
         else:
             self.detailwindow.show()
+    
     
     # Function to react to project selection in the combox
     def on_cbproject_changed(self, value):
@@ -489,8 +498,6 @@ class MainWindow(QMainWindow):
     def deleteData(self, timestamp):
         datacursor.execute(Q_delete, (timestamp,))
         connection_data.commit()
-        self.readfromdatabase()
-        self.on_cbproject_changed(self.ui.comboBox_project.currentText())
 
     # this function strings together an sql statement to filter the data in the database according to the checkboxes that are checked
     def checkthedata(self):
