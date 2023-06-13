@@ -92,6 +92,7 @@ class MainWindow(QMainWindow):
         self.colors = ["b", "g", "r", "c", "m", "y", "k"]
         self.color = self.colors[0]
         # -""- parsing
+        self.surecounter = 0
         self.checkboxes_design = []
         self.checkboxes_sample = []
         self.checkboxes_material = []
@@ -161,11 +162,15 @@ class MainWindow(QMainWindow):
         self.splitData(timestamps)
 
     def detailwindow_delete(self):
-        timestamps = self.detailwindow.get_timestamps()
-        for timestamp in timestamps:
-            self.deleteData(timestamp)
-        self.readfromdatabase()
-        self.on_cbproject_changed(self.ui.comboBox_project.currentText())
+        if self.surecounter == 0:
+            self.surecounter = 1
+        else:
+            self.surecounter = 0
+            timestamps = self.detailwindow.get_timestamps()
+            for timestamp in timestamps:
+                self.deleteData(timestamp)
+            self.readfromdatabase()
+            self.on_cbproject_changed(self.ui.comboBox_project.currentText())
         
     def readfromdatabase(self):
         # This function reads the data from the database and makes it available for plotting.
@@ -509,93 +514,119 @@ class MainWindow(QMainWindow):
         sqlcommand = ""
         # each filter has a list of checked checkboxes. if the list is not empty, the filtering sql statement is extended
         if self.checkboxes_design:
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_design:
                 sqlcommand = sqlcommand + "design = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_sample:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_sample:
                 sqlcommand = sqlcommand + "sample = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_material:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_material:
                 sqlcommand = sqlcommand + "material = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_print:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_print:
                 sqlcommand = sqlcommand + "print = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_orientation:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_orientation:
                 sqlcommand = sqlcommand + "orientation = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_A:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_A:
                 sqlcommand = sqlcommand + "apara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_B:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_B:
                 sqlcommand = sqlcommand + "bpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_F:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_F:
                 sqlcommand = sqlcommand + "fpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_G:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_G:
                 sqlcommand = sqlcommand + "gpara = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_direction:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_direction:
                 sqlcommand = sqlcommand + "direction = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_speed:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_speed:
                 sqlcommand = sqlcommand + "speed = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_cycles:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_cycles:
                 sqlcommand = sqlcommand + "cycles = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         if self.checkboxes_steps:
             if notthefirst:
                 sqlcommand = sqlcommand + " AND "
+            sqlcommand = sqlcommand + "("
             for value in self.checkboxes_steps:
                 sqlcommand = sqlcommand + "steps = " + "'" + str(value) + "'" + " OR "
             sqlcommand = sqlcommand[:-4]
+            sqlcommand = sqlcommand + ")"
             notthefirst = True
         # if no filter was the first filter, the sql statement is empty and the function returns false
         if notthefirst == False:
@@ -1492,9 +1523,9 @@ class MainWindow(QMainWindow):
                 #gradientR2 = np.mean(list2)
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 5, label)
+                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 15, label)
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 5, label)
+                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 15, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
@@ -1602,9 +1633,9 @@ class MainWindow(QMainWindow):
                 timestamp2_sorted += [i[1]]
             # labeling does not work, colors do not work
             for plots in range(len(gradient1_sorted)):
-                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 5, self.findbytimestamp(timestamp1_sorted[plots]))
+                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 5, self.findbytimestamp(timestamp2_sorted[plots]))
+                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 counter += 1
                 self.color = self.colors[counter % 6]
