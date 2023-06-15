@@ -1688,7 +1688,7 @@ class MainWindow(QMainWindow):
             self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
             self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
 
-        self.ui.label_userinfo.setText("Plot updated to show " + self.toplot)
+        self.ui.label_userinfo.setText("Plot updated to show " + self.toplot + ". Click a curve to display label, right click to hide label.")
                 
 
 
