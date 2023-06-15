@@ -16,6 +16,8 @@ from scipy import signal, ndimage
 #from operator import itemgetter
 
 import matplotlib
+import mplcursors
+import mpld3
 matplotlib.use('QtAgg')
 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar, FigureCanvasQTAgg as FigureCanvas
@@ -1543,34 +1545,35 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
 
-                unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
-                sorted_list1 = sorted(unsorted_list1)
-                unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
-                sorted_list2 = sorted(unsorted_list2)
+            unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
+            sorted_list1 = sorted(unsorted_list1)
+            unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
+            sorted_list2 = sorted(unsorted_list2)
 
-                gradient1_sorted = []
-                timestamp1_sorted = []
-                gradient2_sorted = []
-                timestamp2_sorted = []
+            gradient1_sorted = []
+            timestamp1_sorted = []
+            gradient2_sorted = []
+            timestamp2_sorted = []
 
-                for i in sorted_list1:
-                    gradient1_sorted += [i[0]]
-                    timestamp1_sorted += [i[1]]
+            for i in sorted_list1:
+                gradient1_sorted += [i[0]]
+                timestamp1_sorted += [i[1]]
 
-                for i in sorted_list2:
-                    gradient2_sorted += [i[0]]
-                    timestamp2_sorted += [i[1]]
+            for i in sorted_list2:
+                gradient2_sorted += [i[0]]
+                timestamp2_sorted += [i[1]]
                 # labeling does not work, colors do not work
-                for plots in range(len(gradient1_sorted)):
-                    self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
-                    self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                    self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
-                    self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                    counter += 1
-                    self.color = self.colors[counter % 6]
+            for plots in range(len(gradient1_sorted)):
+                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
+                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
+                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                counter += 1
+                self.color = self.colors[counter % 6]
             
-                self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
-                self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+            self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
+            self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+
 
         elif self.toplot == "Gradient of Valleys":
             self.xtext = "Timestamp"
@@ -1599,8 +1602,6 @@ class MainWindow(QMainWindow):
                 origindata = []
                 R1_origin = 1
                 R2_origin = 1
-                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
-                max_step = datacursor.fetchall()[0]
                 label = self.findbytimestamp(self.timestamp[t])
                 datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
                 halfcyclebreaks = []
@@ -1830,6 +1831,9 @@ class MplCanvas(FigureCanvas):
         self.axes = fig.add_subplot(1, 1, 1)
         #self.axes2 = fig.add_subplot(2, 1, 2)
         super(MplCanvas, self).__init__(fig)
+        #Cursur for highlighting enabled
+        mplcursors.cursor()
+
 
     def plot_box(self, all_data, ax, vert=True, color=False, labels=["x1"]):
         ax.cla() #clear self
@@ -1863,10 +1867,15 @@ class MplCanvas(FigureCanvas):
 
 
     def plot_dot(self, x, y, color, size, label):
-        self.axes.scatter(x, y, c=color, s=size, label=label)
+        scatter = self.axes.scatter(x, y, c=color, s=size, label=label)
+        scatter.set_label(label)
+        mplcursors.cursor(scatter)
         self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
         # Trigger the canvas to update and redraw.
         self.draw()
+        #scatter = self.axes.scatter(x, y, c=color, s=size, label=label)
+        #tooltip = mpld3.plugins.PointLabelTooltip(scatter, labels=label)
+        #mpld3.plugins.connect(self.fig, tooltip)
 
     def set_axes(self, ymin, ymax, xmax):
         self.axes.set_ylim(ymin, ymax)
@@ -1875,7 +1884,9 @@ class MplCanvas(FigureCanvas):
 
 
     def plot_line(self, x, y, color, label):
-        self.axes.plot(x, y, color=color, label=label)
+        line, = self.axes.plot(x, y, color=color, label=label)
+        line.set_label(label)
+        mplcursors.cursor(line)
         self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
         self.draw()
 
