@@ -128,9 +128,12 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.frame_toolbar)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.label_userinfo = QLabel(self.centralwidget)
+        self.label_userinfo.setObjectName(u"label_userinfo")
+        self.label_userinfo.setMinimumSize(QSize(700, 0))
+        self.label_userinfo.setMaximumSize(QSize(700, 16777215))
 
-        self.horizontalLayout.addItem(self.horizontalSpacer)
+        self.horizontalLayout.addWidget(self.label_userinfo)
 
         self.pushButton_detail = QPushButton(self.centralwidget)
         self.pushButton_detail.setObjectName(u"pushButton_detail")
@@ -409,14 +412,15 @@ class Ui_MainWindow(object):
         self.comboBox_value.setItemText(3, QCoreApplication.translate("MainWindow", u"Boxplot MAE Hysteresis", None))
         self.comboBox_value.setItemText(4, QCoreApplication.translate("MainWindow", u"1", None))
         self.comboBox_value.setItemText(5, QCoreApplication.translate("MainWindow", u"2", None))
-        self.comboBox_value.setItemText(6, QCoreApplication.translate("MainWindow", u"3", None))
-        self.comboBox_value.setItemText(7, QCoreApplication.translate("MainWindow", u"4", None))
+        self.comboBox_value.setItemText(6, QCoreApplication.translate("MainWindow", u"Gradient of Peaks", None))
+        self.comboBox_value.setItemText(7, QCoreApplication.translate("MainWindow", u"Gradient of Valleys", None))
         self.comboBox_value.setItemText(8, QCoreApplication.translate("MainWindow", u"5", None))
         self.comboBox_value.setItemText(9, QCoreApplication.translate("MainWindow", u"6", None))
         self.comboBox_value.setItemText(10, QCoreApplication.translate("MainWindow", u"7", None))
 
         self.label_oncycle.setText(QCoreApplication.translate("MainWindow", u"on cycle", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"to", None))
+        self.label_userinfo.setText(QCoreApplication.translate("MainWindow", u"Please Uplaod samples first, then Connect to database. [Top left]", None))
         self.pushButton_detail.setText(QCoreApplication.translate("MainWindow", u"Details", None))
         self.pushButton_update.setText(QCoreApplication.translate("MainWindow", u"Update", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Speed", None))

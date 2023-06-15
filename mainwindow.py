@@ -31,6 +31,7 @@ from ui_form import Ui_MainWindow
 from ui_detailwindow import Ui_DetWindow
 
 #Create a database in RAM
+database = "MasetrarbeitDB.db"
 connection_data = sqlite3.connect('MasterarbeitDB.db')
 connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
@@ -129,8 +130,8 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_detail.clicked.connect(self.onclick_detail)
         self.ui.pushButton_update.clicked.connect(self.update_all)
         # These are the graphs that are shown in the main window. The ScatterPlot class uses pyqtgraph to create the graphs. This is a quick and dirty solution and legacy code.
-        self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
-        self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
+        #self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
+        #self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         # The Canvas class uses matplotlib to create the graphs. This is the new and better solution. (This can easily do boxplots etc and could even be further improved with seaborn etc.)
         self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.canvas2 = MplCanvas(self, width=5, height=4, dpi=100)
@@ -195,6 +196,7 @@ class MainWindow(QMainWindow):
                 self.ui.comboBox_project.addItems(projectdata)
             else:
                 check = False 
+        self.ui.label_userinfo.setText("Connected to database " + database)
 
     # toggle detail window
     def onclick_detail(self):
@@ -826,7 +828,8 @@ class MainWindow(QMainWindow):
             connection_data.commit()
             datacursor_tuple.execute("Select timestamp, project, design, sample, material, print, orientation, apara, bpara, fpara, gpara, speed, cycles, steps from database")
             for x in datacursor_tuple:
-                print(x)       
+                print(x)    
+        self.ui.label_userinfo.setText("Uplaod done. Please press Connect or Upload more samples.")   
         # clear the rawdata list after adding it to the database
         self.rawdata.clear()
 
@@ -1444,7 +1447,7 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
-        elif self.toplot == "3":
+        elif self.toplot == "Gradient of Peaks":
             self.xtext = "Timestamp"
             self.ytext = "Gradient of Peaks"
             self.xunit = ""
@@ -1455,8 +1458,15 @@ class MainWindow(QMainWindow):
             maxstepreached = False
             cyclebreaks = [0]
             halfcyclebreaks = [0]
+            gradientR1 = []
+            gradientR2 = []
+            listoftimestamps = []
             self.canvas.clear()
             self.canvas2.clear()
+            if self.ui.spinBox_cycle.value() == self.ui.spinBox_cycleEnd.value():
+                self.ui.label_userinfo.setText("Please select at least two cycles")
+                print("Please select at least two cycles")
+                return 
             
             
 
@@ -1512,8 +1522,9 @@ class MainWindow(QMainWindow):
                     if p == 0:
                         pass
 
-                gradientR1 = np.mean(temp_grad1)                
-                gradientR2 = np.mean(temp_grad2)
+                gradientR1.append(np.mean(temp_grad1))              
+                gradientR2.append(np.mean(temp_grad2))
+                listoftimestamps.append(self.timestamp[t])
                 #list1 = []
                 #list2 = []
                 #for cycle in range(len(temp2_stepcount)-1):
@@ -1523,17 +1534,45 @@ class MainWindow(QMainWindow):
                 #gradientR2 = np.mean(list2)
                 #self.graphWidget.plotline(temp_stepcount, temp_R1, self.findbytimestamp(self.timestamp[t]), self.color)
                 #self.graphWidget2.plotline(temp_stepcount, temp_R2, self.findbytimestamp(self.timestamp[t]), self.color)
-                self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 15, label)
-                self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 15, label)
-                self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                #self.canvas.plot_dot(self.timestamp[t], gradientR1, self.color, 15, label)
+                #self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                #self.canvas2.plot_dot(self.timestamp[t], gradientR2, self.color, 15, label)
+                #self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
                 del self.stepcount[:self.stepcount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
-                counter += 1
 
-        elif self.toplot == "4":
+                unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
+                sorted_list1 = sorted(unsorted_list1)
+                unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
+                sorted_list2 = sorted(unsorted_list2)
+
+                gradient1_sorted = []
+                timestamp1_sorted = []
+                gradient2_sorted = []
+                timestamp2_sorted = []
+
+                for i in sorted_list1:
+                    gradient1_sorted += [i[0]]
+                    timestamp1_sorted += [i[1]]
+
+                for i in sorted_list2:
+                    gradient2_sorted += [i[0]]
+                    timestamp2_sorted += [i[1]]
+                # labeling does not work, colors do not work
+                for plots in range(len(gradient1_sorted)):
+                    self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
+                    self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                    self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
+                    self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
+                    counter += 1
+                    self.color = self.colors[counter % 6]
+            
+                self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
+                self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+
+        elif self.toplot == "Gradient of Valleys":
             self.xtext = "Timestamp"
             self.ytext = "Gradient of Valleys"
             self.xunit = ""
@@ -1549,6 +1588,11 @@ class MainWindow(QMainWindow):
             gradientR1 = []
             gradientR2 = []
             listoftimestamps = []
+            if self.ui.spinBox_cycle.value() == self.ui.spinBox_cycleEnd.value():
+                    self.ui.label_userinfo.setText("Please select at least two cycles")
+                    print("Please select at least two cycles")
+                    return 
+            
             
 
             for t in range(len(self.timestamp)):
@@ -1586,7 +1630,7 @@ class MainWindow(QMainWindow):
                 temp_height2 = []
                 temp_grad1 = []
                 temp_grad2 = []
-                cyclecounter = 0
+                cyclecounter = 0                 
                 for cb in range((self.ui.spinBox_cycle.value()-1),self.ui.spinBox_cycleEnd.value()):
                     temp2_stepcount.append(cyclecounter)
                     temp2_R1.append(temp_R1[cyclebreaks[cb]])
@@ -1639,6 +1683,11 @@ class MainWindow(QMainWindow):
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 counter += 1
                 self.color = self.colors[counter % 6]
+            
+            self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
+            self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+
+        self.ui.label_userinfo.setText("Plot updated to show " + self.toplot)
                 
 
 
@@ -1741,7 +1790,6 @@ class MainWindow(QMainWindow):
                             self.data.append(lines[1].split(','))
                             # Line 2 is the header for the raw data, so we skip it and add the rest of the lines to the list
                             self.rawdata.append("".join(lines[7:])) 
-                        print("Data added")  
                         # Now we add the parsed data into the database according to the parameters in the file
                         self.onclick_upload()
                         # Remove the keywords used in the onclick_upload function so we do not try to upload the same data again
@@ -1750,30 +1798,30 @@ class MainWindow(QMainWindow):
                         self.data.remove("Test")
                     else:
                         # If the file is a duplicate, skip it
-                        print("Duplicate file found: "+i)
+                        self.ui.label_userinfo.setText("Duplicate file found: "+i + " skipped")
                         dupcheck = False
                         continue           
 
 # this class uses pyqtgraph to plot the data, it is not used anymore, but it is kept here for reference
-class ScatterPlot(pg.PlotWidget):
-    def __init__(self, xtext, xunit, ytext, yunit, **kargs):
-        super().__init__(**kargs)
-        self.setBackground('w')
-        self.setLabel(axis='bottom', text=xtext, units=xunit)
-        self.setLabel(axis='left', text=ytext, units=yunit)
-        self.showGrid(x=True, y=True, alpha=0.5)
+#class ScatterPlot(pg.PlotWidget):
+#    def __init__(self, xtext, xunit, ytext, yunit, **kargs):
+#        super().__init__(**kargs)
+#        self.setBackground('w')
+#        self.setLabel(axis='bottom', text=xtext, units=xunit)
+#        self.setLabel(axis='left', text=ytext, units=yunit)
+#        self.showGrid(x=True, y=True, alpha=0.5)
 
-    def refresh(self, xtext, xunit, ytext, yunit):
-        self.clear()
-        self.setLabel(axis='bottom', text=xtext + " " + xunit)
-        self.setLabel(axis='left', text=ytext + " " + yunit)
+#    def refresh(self, xtext, xunit, ytext, yunit):
+#        self.clear()
+#        self.setLabel(axis='bottom', text=xtext + " " + xunit)
+#        self.setLabel(axis='left', text=ytext + " " + yunit)
 
-    def plotnew(self, x, y, coding, color, size):
-        self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=size, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
+#    def plotnew(self, x, y, coding, color, size):
+#        self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=size, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
 
-    def plotline(self, x, y, coding, color):
-        self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=5, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
-        self.addItem(pg.PlotCurveItem(x, y, pen=pg.mkPen(color=color, width=2)))
+#    def plotline(self, x, y, coding, color):
+#        self.addItem(pg.ScatterPlotItem(x, y, symbol='o', size=5, data=coding, hoverable=True, brush=QBrush(QColor(*color))))
+#        self.addItem(pg.PlotCurveItem(x, y, pen=pg.mkPen(color=color, width=2)))
 
 # this class is used to plot the data using matplotlib.
 class MplCanvas(FigureCanvas):
@@ -1818,6 +1866,11 @@ class MplCanvas(FigureCanvas):
         self.axes.scatter(x, y, c=color, s=size, label=label)
         self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
         # Trigger the canvas to update and redraw.
+        self.draw()
+
+    def set_axes(self, ymin, ymax, xmax):
+        self.axes.set_ylim(ymin, ymax)
+        self.axes.hlines(y=0, xmin=0, xmax=xmax, linewidth=1, color='b', linestyles='dashed')
         self.draw()
 
 
