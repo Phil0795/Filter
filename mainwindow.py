@@ -853,7 +853,7 @@ class MainWindow(QMainWindow):
         self.timestamp.clear()
         # if no timestamp are left, clear both canvas and return
         if len(timestamps) == 0:
-            print ("no timestamps left")
+            self.ui.label_userinfo.setText("No timestamps left. Please change the filters.")
             self.canvas.clear()
             self.canvas2.clear()
             return
