@@ -2,6 +2,7 @@
 import sys
 import os
 import sqlite3
+import time
 
 
 
@@ -33,8 +34,8 @@ from ui_form import Ui_MainWindow
 from ui_detailwindow import Ui_DetWindow
 
 #Create a database in RAM
-database = "MasetrarbeitDB.db"
-connection_data = sqlite3.connect('MasterarbeitDB.db')
+database = 'MasterarbeitDB.db'
+connection_data = sqlite3.connect(str(database))
 connection_data.row_factory = lambda cursor, row: row[0]
 # Create a cursor to work with
 datacursor = connection_data.cursor()
@@ -844,6 +845,8 @@ class MainWindow(QMainWindow):
 
 
     def update_all(self):
+        self.ui.label_userinfo.setText("Please wait. This may take a while if lots of timestamps were selected.")
+        QApplication.processEvents()
         self.splitData(self.tempdata)
 
     # Function to split the data bulk into different list. This is used when raw data shall be displayed.
