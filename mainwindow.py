@@ -1008,17 +1008,18 @@ class MainWindow(QMainWindow):
                 max_step = datacursor.fetchall()[0]
                 label = self.findbytimestamp(self.timestamp[t])
                 self.color = self.colors[counter % 6]
-                halfcyclebreaks = [0]
+                halfcyclebreaks = []
+                halfcyclebreaks.append(0)
                 cyclebreaks = [0]
                 # get the list up to but not including the next keyword
                 temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
                 temp_R1 = self.R1[:self.R1.index(keyword)]
                 temp_R2 = self.R2[:self.R2.index(keyword)]
                 for i in range(len(temp_stepcount)):
-                    if  maxstepreached == False and max_step-temp_stepcount[i] <=4:
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=14:
                         halfcyclebreaks.append(i)
                         maxstepreached = True
-                    if maxstepreached == True and temp_stepcount[i] <= 4:
+                    if maxstepreached == True and temp_stepcount[i] <= 14:
                         cyclebreaks.append(i)
                         halfcyclebreaks.append(i)
                         maxstepreached = False
@@ -1029,7 +1030,8 @@ class MainWindow(QMainWindow):
 
                 #function to interpolate the data 
                 #print(halfcyclebreaks)  
-                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
+                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value()+1
+                print (len(halfcyclebreaks))
                 for iter in range(iternum):
                     if iter > 0:
                         label = None
@@ -1041,21 +1043,43 @@ class MainWindow(QMainWindow):
                     upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
                     downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
                     #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(upwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    upwardssteps = [upwardssteps[i] for i in unique_indices]
+                    upwardsR1 = [upwardsR1[i] for i in unique_indices]
+                    upwardsR2 = [upwardsR2[i] for i in unique_indices]
+                    #seen = set()
+                    #indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
                     #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
+                    #if indices:
+                    #    for index in reversed(indices):
+                    #        del upwardssteps[index]
+                    #        del upwardsR1[index]
+                    #        del upwardsR2[index]
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(downwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    downwardssteps = [downwardssteps[i] for i in unique_indices]
+                    downwardsR1 = [downwardsR1[i] for i in unique_indices]
+                    downwardsR2 = [downwardsR2[i] for i in unique_indices]
+                    #seen = set()
+                    #indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    #if indices:
+                    #    for index in reversed(indices):
+                    #        del downwardssteps[index]
+                    #        del downwardsR1[index]
+                    #        del downwardsR2[index]
                     mykind = 'cubic'
                     predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
                     predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
@@ -1223,8 +1247,6 @@ class MainWindow(QMainWindow):
             self.ytext = "MAE in Hysteresis _ Each Cycle"
             self.xunit = ""
             self.yunit = "(%)"
-            self.graphWidget.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
-            self.graphWidget2.refresh(self.xtext, self.xunit, self.ytext, self.yunit)
             counter = 0
             maxstepreached = False
             cyclebreaks = [0]
@@ -1271,31 +1293,53 @@ class MainWindow(QMainWindow):
                     upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
                     downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
                     #find indices of duplicates
-                    seen = set()
-                    indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(upwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    upwardssteps = [upwardssteps[i] for i in unique_indices]
+                    upwardsR1 = [upwardsR1[i] for i in unique_indices]
+                    upwardsR2 = [upwardsR2[i] for i in unique_indices]
+                    #seen = set()
+                    #indices = [i for i, x in enumerate(upwardssteps) if upwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
                     #delete duplicates
-                    if indices:
-                        for index in reversed(indices):
-                            del upwardssteps[index]
-                            del upwardsR1[index]
-                            del upwardsR2[index]
-                    seen = set()
-                    indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
-                    if indices:
-                        for index in reversed(indices):
-                            del downwardssteps[index]
-                            del downwardsR1[index]
-                            del downwardsR2[index]
+                    #if indices:
+                    #    for index in reversed(indices):
+                    #        del upwardssteps[index]
+                    #        del upwardsR1[index]
+                    #        del upwardsR2[index]
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(downwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    downwardssteps = [downwardssteps[i] for i in unique_indices]
+                    downwardsR1 = [downwardsR1[i] for i in unique_indices]
+                    downwardsR2 = [downwardsR2[i] for i in unique_indices]
+                    #seen = set()
+                    #indices = [i for i, x in enumerate(downwardssteps) if downwardssteps.count(x) > 1 and x not in seen and not seen.add(x)]
+                    #if indices:
+                    #    for index in reversed(indices):
+                    #        del downwardssteps[index]
+                    #        del downwardsR1[index]
+                    #        del downwardsR2[index]
                     mykind = 'cubic'
                     predictupwards_r1 = interp1d(upwardssteps, upwardsR1, kind=mykind, bounds_error=False, fill_value=(upwardsR1[0], upwardsR1[-1]))
                     predictdownwards_r1 = interp1d(downwardssteps, downwardsR1, kind=mykind, bounds_error=False, fill_value=(downwardsR1[-1], downwardsR1[0]))
                     predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
                     predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
                     stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 15)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 15)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 15)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 15)
                     div1 = np.abs(max(pu_r1)-min(pu_r1))
                     div2 = np.abs(max(pu_r2)-min(pu_r2))
                     #error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
@@ -1874,6 +1918,10 @@ class MplCanvas(FigureCanvas):
         scatter.set_label(label)
         mplcursors.cursor(scatter)
         self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
+        #remove the legend if more than x items are plotted
+        x = 8
+        if len(self.axes.get_legend_handles_labels()[1]) > x:
+            self.axes.legend().remove()
         # Trigger the canvas to update and redraw.
         self.draw()
         #scatter = self.axes.scatter(x, y, c=color, s=size, label=label)
@@ -1891,6 +1939,10 @@ class MplCanvas(FigureCanvas):
         line.set_label(label)
         mplcursors.cursor(line)
         self.axes.legend(facecolor = 'lightgray', loc=0, fontsize=7)
+        #remove the legend if more than x items are plotted
+        x = 8
+        if len(self.axes.get_legend_handles_labels()[1]) > x:
+            self.axes.legend().remove()
         self.draw()
 
 class DetailWindow(QMainWindow):
