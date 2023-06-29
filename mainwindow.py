@@ -1593,9 +1593,9 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
 
             unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
-            sorted_list1 = sorted(unsorted_list1)
+            sorted_list1 = sorted(unsorted_list1, key=lambda x: abs(x[0]))
             unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
-            sorted_list2 = sorted(unsorted_list2)
+            sorted_list2 = sorted(unsorted_list2, key=lambda x: abs(x[0]))
 
             gradient1_sorted = []
             timestamp1_sorted = []
@@ -1618,8 +1618,8 @@ class MainWindow(QMainWindow):
                 counter += 1
                 self.color = self.colors[counter % 6]
             
-            self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
-            self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+            self.canvas.set_axes(-max(min(gradient1_sorted),max(gradient1_sorted))-0.5, max(min(gradient1_sorted),max(gradient1_sorted))+0.5, len(gradient1_sorted)+1)
+            self.canvas2.set_axes(-max(min(gradient2_sorted),max(gradient2_sorted))-0.5, max(min(gradient2_sorted),max(gradient2_sorted))+0.5, len(gradient2_sorted)+1)
 
 
         elif self.toplot == "Gradient of Valleys":
@@ -1707,9 +1707,9 @@ class MainWindow(QMainWindow):
 
             # sort the gradients and timestamps
             unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
-            sorted_list1 = sorted(unsorted_list1)
+            sorted_list1 = sorted(unsorted_list1, key=lambda x: abs(x[0]))
             unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
-            sorted_list2 = sorted(unsorted_list2)
+            sorted_list2 = sorted(unsorted_list2, key=lambda x: abs(x[0]))
 
             gradient1_sorted = []
             timestamp1_sorted = []
@@ -1732,8 +1732,8 @@ class MainWindow(QMainWindow):
                 counter += 1
                 self.color = self.colors[counter % 6]
             
-            self.canvas.set_axes(min(gradient1_sorted)-0.5, max(gradient1_sorted)+0.5, len(gradient1_sorted)+1)
-            self.canvas2.set_axes(min(gradient2_sorted)-0.5, max(gradient2_sorted)+0.5, len(gradient2_sorted)+1)
+            self.canvas.set_axes(-max(min(gradient1_sorted),max(gradient1_sorted))-0.5, max(min(gradient1_sorted),max(gradient1_sorted))+0.5, len(gradient1_sorted)+1)
+            self.canvas2.set_axes(-max(min(gradient2_sorted),max(gradient2_sorted))-0.5, max(min(gradient2_sorted),max(gradient2_sorted))+0.5, len(gradient2_sorted)+1)
 
         self.ui.label_userinfo.setText("Plot updated to show " + self.toplot + ". Click a curve to display label, right click to hide label.")
                 
