@@ -847,7 +847,9 @@ class MainWindow(QMainWindow):
     def update_all(self):
         self.ui.label_userinfo.setText("Please wait. This may take a while if lots of timestamps were selected.")
         QApplication.processEvents()
-        self.splitData(self.tempdata)
+        self.set_detailWindow(self.tempdata)
+        timestamps = self.detailwindow.get_timestamps()
+        self.splitData(timestamps)
 
     # Function to split the data bulk into different list. This is used when raw data shall be displayed.
     def splitData(self, timestamps = []):
@@ -908,6 +910,8 @@ class MainWindow(QMainWindow):
         #self.graphWidget.clear()
         #self.graphWidget2.clear()
         keyword = "Next"
+
+
         if self.toplot == "Resistance / Time":
             self.xtext = "Time"
             self.ytext = "Change in Resistance"
@@ -937,6 +941,8 @@ class MainWindow(QMainWindow):
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
+
+
 
         elif self.toplot == "Resistance / Steps":
             self.xtext = "Step"
@@ -1103,17 +1109,31 @@ class MainWindow(QMainWindow):
                     #self.graphWidget.plotline(stepcount_detail, pu_r1, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget.plotline(stepcount_detail, pd_r1, str(error1), self.color)
                     self.canvas.plot_line(stepcount_detail, pu_r1, self.color, label)
-                    counter += 1
-                    self.color = self.colors[counter % 6]
+                    self.canvas.plot_dot(upwardssteps, upwardsR1, self.color, 5, None)
+                    if len(self.timestamp) == 1:
+                        if iternum == 1:
+                            counter += 1
+                            self.color = self.colors[counter % 6]
                     self.canvas.plot_line(stepcount_detail, pd_r1, self.color, None)
-                    counter -= 1
-                    self.color = self.colors[counter % 6]
+                    self.canvas.plot_dot(downwardssteps, downwardsR1, self.color, 5, None)
+                    if len(self.timestamp) == 1:
+                        if iternum == 1:
+                            counter -= 1
+                            self.color = self.colors[counter % 6]
                     self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
                     self.canvas2.plot_line(stepcount_detail, pu_r2, self.color, label)
-                    counter += 1
-                    self.color = self.colors[counter % 6]
+                    self.canvas2.plot_dot(upwardssteps, upwardsR2, self.color, 5, None)
+                    if len(self.timestamp) == 1:
+                        if iternum == 1:
+                            counter += 1
+                            self.color = self.colors[counter % 6]
                     self.canvas2.plot_line(stepcount_detail, pd_r2, self.color, None)
+                    self.canvas2.plot_dot(downwardssteps, downwardsR2, self.color, 5, None)
                     self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+                    if len(self.timestamp) == 1:
+                        if iternum > 1:
+                            counter += 1
+                            self.color = self.colors[counter % 6]
                     #self.graphWidget2.plotline(stepcount_detail, pu_r2, self.findbytimestamp(self.timestamp[t]), self.color)
                     #self.graphWidget2.plotline(stepcount_detail, pd_r2, str(error2), self.color)
                 # create a list from temp_stepcount from cyclebreak to cyclebreak
