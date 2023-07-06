@@ -112,6 +112,7 @@ class MainWindow(QMainWindow):
         self.checkboxes_steps = []
         self.checkboxes = []
         self.timestamp = []
+        self.gaussian_filter = 5
         # -""- plotting
         self.cycle = None
         self.cycleEnd = None
@@ -484,7 +485,9 @@ class MainWindow(QMainWindow):
         self.set_detailWindow()
         
         
-
+    def gaussianfilter_changed(self, value):
+        self.gaussianfilter = value
+        self.ui.label_userinfo.setText("Gaussian filter changed to" + self.gaussian_filter + "". Click 'Update' to apply changes.")
 
     # this function reacts to the second combox being changed. It contains the different ways the data can be plotted
     def on_cbvalue_changed(self, value):
@@ -1092,10 +1095,10 @@ class MainWindow(QMainWindow):
                     predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
                     predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
                     stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), self.gaussion_filter)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), self.gaussion_filter)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), self.gaussion_filter)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), self.gaussion_filter)
                     error1 = np.mean(np.abs(pu_r1 - pd_r1))
                     error2 = np.mean(np.abs(pu_r2 - pd_r2))
                     #print (stepcount_detail)
@@ -1223,10 +1226,10 @@ class MainWindow(QMainWindow):
                     predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
                     predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
                     stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), self.gaussion_filter)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), self.gaussion_filter)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), self.gaussion_filter)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), self.gaussion_filter)
                     error1 = np.mean(np.abs(pu_r1 - pd_r1))
                     error2 = np.mean(np.abs(pu_r2 - pd_r2))
                     #print (stepcount_detail)
@@ -1356,10 +1359,10 @@ class MainWindow(QMainWindow):
                     predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
                     predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
                     stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 15)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 15)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 15)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 15)
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), self.gaussion_filter)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), self.gaussion_filter)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), self.gaussion_filter)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), self.gaussion_filter)
                     div1 = np.abs(max(pu_r1)-min(pu_r1))
                     div2 = np.abs(max(pu_r2)-min(pu_r2))
                     #error1 = np.mean(np.abs(pu_r1 - pd_r1)/div1)
@@ -1589,10 +1592,10 @@ class MainWindow(QMainWindow):
                     predictupwards_r2 = interp1d(upwardssteps, upwardsR2, kind=mykind, bounds_error=False, fill_value=(upwardsR2[0], upwardsR2[-1]))
                     predictdownwards_r2 = interp1d(downwardssteps, downwardsR2, kind=mykind, bounds_error=False, fill_value=(downwardsR2[-1], downwardsR2[0]))
                     stepcount_detail = list(range(0, max_step+1))
-                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), 5)
-                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), 5)
-                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), 5)
-                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), 5)
+                    pu_r1 = ndimage.gaussian_filter1d(predictupwards_r1(stepcount_detail), self.gaussion_filter)
+                    pd_r1 = ndimage.gaussian_filter1d(predictdownwards_r1(stepcount_detail), self.gaussion_filter)
+                    pu_r2 = ndimage.gaussian_filter1d(predictupwards_r2(stepcount_detail), self.gaussion_filter)
+                    pd_r2 = ndimage.gaussian_filter1d(predictdownwards_r2(stepcount_detail), self.gaussion_filter)
                     error1 = np.mean(np.abs(pu_r1 - pd_r1))
                     error2 = np.mean(np.abs(pu_r2 - pd_r2))
                     #print (stepcount_detail)
