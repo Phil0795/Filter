@@ -487,7 +487,7 @@ class MainWindow(QMainWindow):
         
     def gaussianfilter_changed(self, value):
         self.gaussianfilter = value
-        self.ui.label_userinfo.setText("Gaussian filter changed to" + self.gaussian_filter + "". Click 'Update' to apply changes.")
+        self.ui.label_userinfo.setText("Gaussian filter changed to" + self.gaussian_filter + ". Click 'Update' to apply changes.")
 
     # this function reacts to the second combox being changed. It contains the different ways the data can be plotted
     def on_cbvalue_changed(self, value):
