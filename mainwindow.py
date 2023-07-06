@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         self.R1 = []
         self.R2 = []
         # -""- setting the color of the graphs
-        self.colors = ["b", "g", "r", "c", "m", "y", "k"]
+        self.colors = ["b", "g", "r", "c", "m", "y", "k", "b", "g", "r", "c", "m", "y", "k", "b", "g", "r", "c", "m", "y", "k", "b", "g", "r", "c", "m", "y", "k", "b", "g", "r", "c", "m", "y", "k"]
         self.color = self.colors[0]
         # -""- parsing
         self.surecounter = 0
@@ -1241,8 +1241,8 @@ class MainWindow(QMainWindow):
                 del self.R2[:self.R2.index(keyword)+1]
                 counter += 1
 
-    # Mean Absolute Error
-        elif self.toplot == "Boxplot MAE Hysteresis":
+    # Mean Absolute Error Interpolation
+        elif self.toplot == "Boxplot MAE Hysteresis (Interpolation)":
             self.xtext = "Sample #"
             self.ytext = "MAE in Hysteresis _ Each Cycle"
             self.xunit = ""
@@ -1347,6 +1347,117 @@ class MainWindow(QMainWindow):
                     for xvar in range(1, max_step, 10):
                         alldata1_cycle.append(np.abs(pu_r1[xvar] - pd_r1[xvar])/div1*100)
                         alldata2_cycle.append(np.abs(pu_r2[xvar] - pd_r2[xvar])/div2*100)
+
+                    # delete the list up to the next keyword
+                all_data1.append(alldata1_cycle)
+                all_data2.append(alldata2_cycle)
+                del self.stepcount[:self.stepcount.index(keyword)+1]
+                del self.R1[:self.R1.index(keyword)+1]
+                del self.R2[:self.R2.index(keyword)+1]
+            # the following steps order the data so the big numbers are displayed at the right side of the graph.
+            # create a tuple containing all_data1 and the labels
+            tuple_data1 = zip(all_data1, labels)
+            tuple_data2 = zip(all_data2, labels)
+            # sort the tuple by the first element, descending
+            tuple_data1 = sorted(tuple_data1, key=lambda x: x[0], reverse=True)
+            tuple_data2 = sorted(tuple_data2, key=lambda x: x[0], reverse=True)
+            # unzip the tuple into two lists
+            labels_1 = []
+            labels_2 = []
+            all_data1, labels_1 = zip(*tuple_data1)
+            all_data2, labels_2 = zip(*tuple_data2)
+
+
+            self.canvas.plot_box(all_data1, self.canvas.axes, True, True, labels_1)
+            self.canvas.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+            self.canvas2.plot_box(all_data2, self.canvas2.axes, True, True, labels_2)
+            self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
+        
+        # Mean Absolute Error from raw data
+        elif self.toplot == "Boxplot MAE Hysteresis (Raw Data)":
+            self.xtext = "Sample #"
+            self.ytext = "MAE in Hysteresis _ Each Cycle"
+            self.xunit = ""
+            self.yunit = "(%)"
+            counter = 0
+            maxstepreached = False
+            cyclebreaks = [0]
+            halfcyclebreaks = [0]
+            all_data1 = []
+            all_data2 = []
+            labels = []
+            
+
+            for t in range(len(self.timestamp)):
+                datacursor.execute("SELECT steps FROM database WHERE timestamp = ?", (self.timestamp[t],))
+                max_step = datacursor.fetchall()[0]
+                counter = 0
+                halfcyclebreaks = [0]
+                cyclebreaks = [0]
+                labels.append(self.findbytimestamp(self.timestamp[t]))
+                alldata1_cycle= []
+                alldata2_cycle = []
+                # get the list up to but not including the next keyword
+                temp_stepcount = self.stepcount[:self.stepcount.index(keyword)]
+                temp_R1 = self.R1[:self.R1.index(keyword)]
+                temp_R2 = self.R2[:self.R2.index(keyword)]
+                for i in range(len(temp_stepcount)):
+                    if  maxstepreached == False and max_step-temp_stepcount[i] <=15:
+                        halfcyclebreaks.append(i)
+                        maxstepreached = True
+                    if maxstepreached == True and temp_stepcount[i] <= 15:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+                    elif maxstepreached == True and i == len(temp_stepcount)-1:
+                        cyclebreaks.append(i)
+                        halfcyclebreaks.append(i)
+                        maxstepreached = False
+
+                #function to interpolate the data 
+                iternum = self.ui.spinBox_cycleEnd.value() - self.ui.spinBox_cycle.value() + 1
+                for iter in range(iternum):
+                    lowercycle = self.ui.spinBox_cycle.value()+iter
+                    upwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]                
+                    downwardssteps = temp_stepcount[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    upwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                    downwardsR1 = temp_R1[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    upwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-2]:halfcyclebreaks[2*lowercycle-1]]
+                    downwardsR2 = temp_R2[halfcyclebreaks[2*lowercycle-1]:halfcyclebreaks[2*lowercycle]]
+                    #find indices of duplicates
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(upwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    upwardssteps = [upwardssteps[i] for i in unique_indices]
+                    upwardsR1 = [upwardsR1[i] for i in unique_indices]
+                    upwardsR2 = [upwardsR2[i] for i in unique_indices]
+                    seen = {}
+                    unique_indices = []
+                    for i, x in enumerate(downwardssteps):
+                        if x not in seen:
+                            seen[x] = i
+                            unique_indices.append(i)
+
+                    # Update the lists using the unique indices
+                    downwardssteps = [downwardssteps[i] for i in unique_indices]
+                    downwardsR1 = [downwardsR1[i] for i in unique_indices]
+                    downwardsR2 = [downwardsR2[i] for i in unique_indices]
+                    
+                    div1 = np.abs(max(upwardsR1)-min(upwardsR1))
+                    div2 = np.abs(max(upwardsR2)-min(upwardsR2))
+                    for xvar in upwardssteps:
+                        for xvar2 in downwardssteps:
+                            if np.abs(xvar - xvar2) <= 4:
+                                value1 = np.abs(upwardsR1[upwardssteps.index(xvar)] - downwardsR1[downwardssteps.index(xvar2)])/div1*100
+                                value2 = np.abs(upwardsR2[upwardssteps.index(xvar)] - downwardsR2[downwardssteps.index(xvar2)])/div2*100
+                                alldata1_cycle.append(value1)
+                                alldata2_cycle.append(value2)
+
 
                     # delete the list up to the next keyword
                 all_data1.append(alldata1_cycle)
@@ -1596,6 +1707,11 @@ class MainWindow(QMainWindow):
             sorted_list1 = sorted(unsorted_list1, key=lambda x: abs(x[0]))
             unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
             sorted_list2 = sorted(unsorted_list2, key=lambda x: abs(x[0]))
+            colorbytstamp = []
+            #order the colors by timestamp
+            for tstamp in listoftimestamps:
+                colorbytstamp.append([tstamp, self.colors[counter % 6]])
+                counter += 1
 
             gradient1_sorted = []
             timestamp1_sorted = []
@@ -1611,12 +1727,13 @@ class MainWindow(QMainWindow):
                 timestamp2_sorted += [i[1]]
                 # labeling does not work, colors do not work
             for plots in range(len(gradient1_sorted)):
-                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
+                #determine color1 by timestamp
+                color1 = self.extractcolor(colorbytstamp, timestamp1_sorted[plots])
+                color2 = self.extractcolor(colorbytstamp, timestamp2_sorted[plots])
+                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], color1, 15, self.findbytimestamp(timestamp1_sorted[plots]))
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
+                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], color2, 15, self.findbytimestamp(timestamp2_sorted[plots]))
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                counter += 1
-                self.color = self.colors[counter % 6]
             
             self.canvas.set_axes(-max(min(gradient1_sorted),max(gradient1_sorted))-0.5, max(min(gradient1_sorted),max(gradient1_sorted))+0.5, len(gradient1_sorted)+1)
             self.canvas2.set_axes(-max(min(gradient2_sorted),max(gradient2_sorted))-0.5, max(min(gradient2_sorted),max(gradient2_sorted))+0.5, len(gradient2_sorted)+1)
@@ -1708,6 +1825,11 @@ class MainWindow(QMainWindow):
             # sort the gradients and timestamps
             unsorted_list1 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR1, listoftimestamps)]
             sorted_list1 = sorted(unsorted_list1, key=lambda x: abs(x[0]))
+            colorbytstamp = []
+            #order the colors by timestamp
+            for tstamp in listoftimestamps:
+                colorbytstamp.append([tstamp, self.colors[counter % 6]])
+                counter += 1
             unsorted_list2 = [(gradient, timestamp) for gradient, timestamp in zip(gradientR2, listoftimestamps)]
             sorted_list2 = sorted(unsorted_list2, key=lambda x: abs(x[0]))
 
@@ -1725,12 +1847,14 @@ class MainWindow(QMainWindow):
                 timestamp2_sorted += [i[1]]
             # labeling does not work, colors do not work
             for plots in range(len(gradient1_sorted)):
-                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], self.color, 15, self.findbytimestamp(timestamp1_sorted[plots]))
+                #determine color1 by timestamp
+                color1 = self.extractcolor(colorbytstamp, timestamp1_sorted[plots])
+                color2 = self.extractcolor(colorbytstamp, timestamp2_sorted[plots])
+                self.canvas.plot_dot(plots+1, gradient1_sorted[plots], color1, 15, self.findbytimestamp(timestamp1_sorted[plots]))
                 self.canvas.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], self.color, 15, self.findbytimestamp(timestamp2_sorted[plots]))
+                self.canvas2.plot_dot(plots+1, gradient2_sorted[plots], color2, 15, self.findbytimestamp(timestamp2_sorted[plots]))
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
-                counter += 1
-                self.color = self.colors[counter % 6]
+                
             
             self.canvas.set_axes(-max(min(gradient1_sorted),max(gradient1_sorted))-0.5, max(min(gradient1_sorted),max(gradient1_sorted))+0.5, len(gradient1_sorted)+1)
             self.canvas2.set_axes(-max(min(gradient2_sorted),max(gradient2_sorted))-0.5, max(min(gradient2_sorted),max(gradient2_sorted))+0.5, len(gradient2_sorted)+1)
@@ -1738,7 +1862,8 @@ class MainWindow(QMainWindow):
         self.ui.label_userinfo.setText("Plot updated to show " + self.toplot + ". Click a curve to display label, right click to hide label.")
                 
 
-
+    def extractcolor(self, list, timestamp):
+        return [item[1] for item in list if item[0] == timestamp]
 
     def uppercyclechanged(self):
         if self.ui.spinBox_cycleEnd.value() < self.ui.spinBox_cycle.value():
