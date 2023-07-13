@@ -161,6 +161,7 @@ class MainWindow(QMainWindow):
         # connecting spinboxes to functions.
         self.ui.spinBox_cycle.valueChanged.connect(self.whatcyclesir)
         self.ui.spinBox_cycleEnd.valueChanged.connect(self.uppercyclechanged)
+        self.ui.spinBox_filter.valueChanged.connect(self.gaussianfilter_changed)
 
     def detailwindow_buttonpress(self):
         timestamps = self.detailwindow.get_timestamps()
@@ -486,8 +487,9 @@ class MainWindow(QMainWindow):
         
         
     def gaussianfilter_changed(self, value):
-        self.gaussianfilter = value
-        self.ui.label_userinfo.setText("Gaussian filter changed to" + self.gaussian_filter + ". Click 'Update' to apply changes.")
+        print("Combox filter changed to: " + str(value))
+        self.gaussian_filter = value
+        self.ui.label_userinfo.setText("Gaussian filter changed to " + str(self.gaussian_filter) + ". Click 'Update' to apply changes.")
 
     # this function reacts to the second combox being changed. It contains the different ways the data can be plotted
     def on_cbvalue_changed(self, value):
@@ -947,7 +949,7 @@ class MainWindow(QMainWindow):
 
 
 
-        elif self.toplot == "Resistance / Steps":
+        elif self.toplot == "Hysteresis raw":
             self.xtext = "Step"
             self.ytext = "Change in Resistance"
             self.xunit = ""
@@ -1397,7 +1399,7 @@ class MainWindow(QMainWindow):
             self.canvas2.update_axes(self.toplot, self.xtext+" "+self.xunit, self.ytext+" "+self.yunit)
         
         # Mean Absolute Error from raw data
-        elif self.toplot == "Boxplot MAE Hysteresis (Raw Data)":
+        elif self.toplot == "Boxplot MAE Hysteresis (raw data)":
             self.xtext = "Sample #"
             self.ytext = "MAE in Hysteresis _ Each Cycle"
             self.xunit = ""

@@ -73,7 +73,6 @@ class Ui_MainWindow(object):
         self.comboBox_value.addItem("")
         self.comboBox_value.addItem("")
         self.comboBox_value.addItem("")
-        self.comboBox_value.addItem("")
         self.comboBox_value.setObjectName(u"comboBox_value")
 
         self.pselectLayout.addWidget(self.comboBox_value)
@@ -90,10 +89,10 @@ class Ui_MainWindow(object):
 
         self.pselectLayout.addWidget(self.spinBox_cycle)
 
-        self.label_2 = QLabel(self.centralwidget)
-        self.label_2.setObjectName(u"label_2")
+        self.label_endcycle = QLabel(self.centralwidget)
+        self.label_endcycle.setObjectName(u"label_endcycle")
 
-        self.pselectLayout.addWidget(self.label_2)
+        self.pselectLayout.addWidget(self.label_endcycle)
 
         self.spinBox_cycleEnd = QSpinBox(self.centralwidget)
         self.spinBox_cycleEnd.setObjectName(u"spinBox_cycleEnd")
@@ -102,9 +101,32 @@ class Ui_MainWindow(object):
 
         self.pselectLayout.addWidget(self.spinBox_cycleEnd)
 
-        self.horizontalSpacer_right = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_right = QSpacerItem(10, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
 
         self.pselectLayout.addItem(self.horizontalSpacer_right)
+
+        self.label_filterlevel = QLabel(self.centralwidget)
+        self.label_filterlevel.setObjectName(u"label_filterlevel")
+
+        self.pselectLayout.addWidget(self.label_filterlevel)
+
+        self.spinBox_filter = QSpinBox(self.centralwidget)
+        self.spinBox_filter.setObjectName(u"spinBox_filter")
+        self.spinBox_filter.setEnabled(True)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.spinBox_filter.sizePolicy().hasHeightForWidth())
+        self.spinBox_filter.setSizePolicy(sizePolicy)
+        self.spinBox_filter.setMinimumSize(QSize(45, 0))
+        self.spinBox_filter.setMaximumSize(QSize(33, 22))
+        self.spinBox_filter.setValue(5)
+
+        self.pselectLayout.addWidget(self.spinBox_filter)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Minimum, QSizePolicy.Minimum)
+
+        self.pselectLayout.addItem(self.horizontalSpacer)
 
 
         self.verticalLayout.addLayout(self.pselectLayout)
@@ -118,11 +140,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.frame_toolbar = QFrame(self.centralwidget)
         self.frame_toolbar.setObjectName(u"frame_toolbar")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.frame_toolbar.sizePolicy().hasHeightForWidth())
-        self.frame_toolbar.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.frame_toolbar.sizePolicy().hasHeightForWidth())
+        self.frame_toolbar.setSizePolicy(sizePolicy1)
         self.frame_toolbar.setFrameShape(QFrame.StyledPanel)
         self.frame_toolbar.setFrameShadow(QFrame.Raised)
 
@@ -134,6 +156,11 @@ class Ui_MainWindow(object):
         self.label_userinfo.setMaximumSize(QSize(700, 16777215))
 
         self.horizontalLayout.addWidget(self.label_userinfo)
+
+        self.pushButton_export = QPushButton(self.centralwidget)
+        self.pushButton_export.setObjectName(u"pushButton_export")
+
+        self.horizontalLayout.addWidget(self.pushButton_export)
 
         self.pushButton_detail = QPushButton(self.centralwidget)
         self.pushButton_detail.setObjectName(u"pushButton_detail")
@@ -407,20 +434,21 @@ class Ui_MainWindow(object):
         self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Connect", None))
         self.label_project.setText(QCoreApplication.translate("MainWindow", u"Project", None))
         self.comboBox_value.setItemText(0, QCoreApplication.translate("MainWindow", u"Resistance / Time", None))
-        self.comboBox_value.setItemText(1, QCoreApplication.translate("MainWindow", u"Resistance / Steps", None))
+        self.comboBox_value.setItemText(1, QCoreApplication.translate("MainWindow", u"Hysteresis raw", None))
         self.comboBox_value.setItemText(2, QCoreApplication.translate("MainWindow", u"Hysteresis interpol.", None))
         self.comboBox_value.setItemText(3, QCoreApplication.translate("MainWindow", u"Boxplot MAE Hysteresis (Interpolation)", None))
-        self.comboBox_value.setItemText(4, QCoreApplication.translate("MainWindow", u"Boxplot MAE Hysteresis (Raw Data)", None))
-        self.comboBox_value.setItemText(5, QCoreApplication.translate("MainWindow", u"2", None))
-        self.comboBox_value.setItemText(6, QCoreApplication.translate("MainWindow", u"Gradient of Peaks", None))
-        self.comboBox_value.setItemText(7, QCoreApplication.translate("MainWindow", u"Gradient of Valleys", None))
-        self.comboBox_value.setItemText(8, QCoreApplication.translate("MainWindow", u"1", None))
-        self.comboBox_value.setItemText(9, QCoreApplication.translate("MainWindow", u"2", None))
-        self.comboBox_value.setItemText(10, QCoreApplication.translate("MainWindow", u"7", None))
+        self.comboBox_value.setItemText(4, QCoreApplication.translate("MainWindow", u"Boxplot MAE Hysteresis (raw data)", None))
+        self.comboBox_value.setItemText(5, QCoreApplication.translate("MainWindow", u"Gradient of Peaks", None))
+        self.comboBox_value.setItemText(6, QCoreApplication.translate("MainWindow", u"Gradient of Valleys", None))
+        self.comboBox_value.setItemText(7, QCoreApplication.translate("MainWindow", u"Test 1", None))
+        self.comboBox_value.setItemText(8, QCoreApplication.translate("MainWindow", u"Test 2", None))
+        self.comboBox_value.setItemText(9, QCoreApplication.translate("MainWindow", u"Test 3", None))
 
         self.label_oncycle.setText(QCoreApplication.translate("MainWindow", u"on cycle", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"to", None))
+        self.label_endcycle.setText(QCoreApplication.translate("MainWindow", u"to", None))
+        self.label_filterlevel.setText(QCoreApplication.translate("MainWindow", u"Filter lvl", None))
         self.label_userinfo.setText(QCoreApplication.translate("MainWindow", u"Please Uplaod samples first, then Connect to database. [Top left]", None))
+        self.pushButton_export.setText(QCoreApplication.translate("MainWindow", u"Export Data", None))
         self.pushButton_detail.setText(QCoreApplication.translate("MainWindow", u"Details", None))
         self.pushButton_update.setText(QCoreApplication.translate("MainWindow", u"Update", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Speed", None))
