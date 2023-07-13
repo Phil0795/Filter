@@ -78,7 +78,7 @@
           </item>
           <item>
            <property name="text">
-            <string>Resistance / Steps</string>
+            <string>Hysteresis raw</string>
            </property>
           </item>
           <item>
@@ -88,17 +88,12 @@
           </item>
           <item>
            <property name="text">
-            <string>Boxplot MAE Hysteresis</string>
+            <string>Boxplot MAE Hysteresis (Interpolation)</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>1</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>2</string>
+            <string>Boxplot MAE Hysteresis (raw data)</string>
            </property>
           </item>
           <item>
@@ -113,17 +108,17 @@
           </item>
           <item>
            <property name="text">
-            <string>5</string>
+            <string>Test 1</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>6</string>
+            <string>Test 2</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>7</string>
+            <string>Test 3</string>
            </property>
           </item>
          </widget>
@@ -164,6 +159,32 @@
         </item>
         <item>
          <spacer name="horizontalSpacer_right">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>10</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_filterlevel">
+          <property name="text">
+           <string>Filter Level</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBox"/>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -214,6 +235,13 @@
           </property>
           <property name="text">
            <string>Please Uplaod samples first, then Connect to database. [Top left]</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_export">
+          <property name="text">
+           <string>Export Data</string>
           </property>
          </widget>
         </item>
