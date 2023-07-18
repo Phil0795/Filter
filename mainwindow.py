@@ -3,16 +3,19 @@ import sys
 import os
 import sqlite3
 import time
-
+import datetime
+import csv
 
 
 
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QHBoxLayout, QFileDialog
+from PySide6.QtCore import Qt, QFile, QThread
+from PySide6.QtWidgets import QApplication, QMainWindow, QCheckBox, QVBoxLayout, QHBoxLayout, QFileDialog, QWidget
 import pyqtgraph as pg
 import numpy as np
 from scipy.interpolate import interp1d
+from pathlib import Path
+from PySide6.QtUiTools import QUiLoader
 from scipy import signal, ndimage
 #from operator import itemgetter
 
@@ -133,6 +136,7 @@ class MainWindow(QMainWindow):
         self.ui.pushButton.clicked.connect(self.readfromdatabase)
         self.ui.pushButton_detail.clicked.connect(self.onclick_detail)
         self.ui.pushButton_update.clicked.connect(self.update_all)
+        self.ui.pushButton_export.clicked.connect(self.onclick_save)
         # These are the graphs that are shown in the main window. The ScatterPlot class uses pyqtgraph to create the graphs. This is a quick and dirty solution and legacy code.
         #self.graphWidget = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
         #self.graphWidget2 = ScatterPlot(self.xtext, self.xunit, self.ytext, self.yunit)
@@ -146,6 +150,8 @@ class MainWindow(QMainWindow):
         self.detailwindow = DetailWindow()
         self.detailwindow.ui.pushButton_update.clicked.connect(self.detailwindow_buttonpress)
         self.detailwindow.ui.pushButton_delete.clicked.connect(self.detailwindow_delete)
+
+        self.cache = Cache()
 
         # The following code gives a layout to the areas of the main window which are filled with the widgets defined above. (Which could not be created in the QTCreator)
         # QVBoxLayout places all widgets on top of each other. QHBoxLayout places all widgets next to each other.
@@ -841,6 +847,21 @@ class MainWindow(QMainWindow):
         # clear the rawdata list after adding it to the database
         self.rawdata.clear()
 
+    def onclick_save(self):
+        try:
+            root = QFileDialog.getExistingDirectory(self, caption='Save File')
+            if root:
+                time = 'T' + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+                folder_name = "Datasave_" + time
+                dictionary = os.path.join(root, folder_name)
+                os.mkdir(dictionary)
+
+                self.cache.save(os.path.join(dictionary, time + '.csv'))
+                self.ui.label_userinfo.setText(f'Save successfully!\nResult is saved to: {dictionary}')
+
+        except Exception as e:
+            self.ui.label_userinfo.setText("Save failed. Error: " + str(e))
+
     def set_detailWindow(self, timestamps = []):
         timestampslong = []
         for stamp in timestamps:
@@ -915,6 +936,7 @@ class MainWindow(QMainWindow):
         #self.graphWidget.clear()
         #self.graphWidget2.clear()
         keyword = "Next"
+        self.cache.clear()
 
 
         if self.toplot == "Resistance / Time":
@@ -942,6 +964,12 @@ class MainWindow(QMainWindow):
                 self.canvas2.plot_line(temp_timecount, temp_R2, self.color, label)
                 self.canvas2.update_axes(self.toplot, self.xtext + " " + self.xunit, self.ytext + " " + self.yunit)
                 # delete the list up to the next keyword
+                self.cache.append(label)
+                result = []
+                for i in range(len(temp_timecount)):
+                    result.append([temp_timecount[i], temp_R1[i], temp_R2[i]])
+                self.cache.append(result)
+                #print (self.cache.data)
                 del self.timecount[:self.timecount.index(keyword)+1]
                 del self.R1[:self.R1.index(keyword)+1]
                 del self.R2[:self.R2.index(keyword)+1]
@@ -2153,6 +2181,22 @@ class DetailWindow(QMainWindow):
     
     def testfunction(self):
         print("test")
+
+class Cache:
+    def __init__(self):
+        self.data = []
+
+    def clear(self):
+        self.data = []
+
+    def append(self, new_data):
+        self.data.append(new_data)
+
+    def save(self, path):
+        with open(path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f, delimiter=',')
+            writer.writerows(self.data)
+
     
 
 # This function is called when the user starts the program. It creates the main window and starts the program
